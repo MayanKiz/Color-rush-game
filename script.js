@@ -94,18 +94,18 @@ function endGame() {
   displayLeaderboard();
 }
 
-// ✅ Send Score to Telegram
+// ✅ Score ko Telegram pe bhejna
 function sendToTelegram(name, score) {
   const message = `SCORE|${name}|${score}`;
   fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`);
 }
 
-// ✅ Fetch Leaderboard from Telegram
+// ✅ Leaderboard fetch karna (saare scores)
 async function displayLeaderboard() {
   scoreList.innerHTML = "<li>Loading leaderboard...</li>";
 
   try {
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates`);
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=0&limit=1000`);
     const data = await res.json();
 
     let scores = [];
@@ -118,9 +118,11 @@ async function displayLeaderboard() {
       }
     });
 
+    // Sort highest score first
     scores.sort((a, b) => b.score - a.score);
     const topFive = scores.slice(0, 5);
 
+    // Update leaderboard UI
     scoreList.innerHTML = "";
     topFive.forEach((player, index) => {
       const li = document.createElement("li");
@@ -137,5 +139,7 @@ async function displayLeaderboard() {
   }
 }
 
+// ✅ Leaderboard har 10 sec me refresh hoga
+setInterval(displayLeaderboard, 10000);
 startBtn.addEventListener("click", startGame);
 window.onload = displayLeaderboard;
