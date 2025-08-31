@@ -10,9 +10,9 @@ const scoreElem = document.getElementById("score");
 const timeElem = document.getElementById("timeLeft");
 const scoreList = document.getElementById("scoreList");
 
-// ✅ Correct & Wrong Sound Effects
-const correctSound = new Audio("Correct.mp3");
-const wrongSound = new Audio("Wrong.mp3");
+// ✅ Correct & Wrong Sound Effects (Correct Path)
+const correctSound = new Audio("/Correct.mp3");
+const wrongSound = new Audio("/Wrong.mp3");
 
 const BOT_TOKEN = "7471112121:AAHXaDVEV7dQTBdpP38OBvytroRUSu-2jYo";
 const CHAT_ID = "7643222418";
@@ -78,12 +78,12 @@ function generateCircles() {
 
       if (randomColor === targetColor) {
         score += 5;
-        correctSound.currentTime = 0;
-        correctSound.play();
+        correctSound.currentTime = 0;  // Reset sound
+        correctSound.play().catch(err => console.log("Sound blocked:", err));
       } else {
         score -= 3;
-        wrongSound.currentTime = 0;
-        wrongSound.play();
+        wrongSound.currentTime = 0;    // Reset sound
+        wrongSound.play().catch(err => console.log("Sound blocked:", err));
       }
 
       scoreElem.textContent = score;
