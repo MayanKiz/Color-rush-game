@@ -10,11 +10,10 @@ const scoreElem = document.getElementById("score");
 const timeElem = document.getElementById("timeLeft");
 const scoreList = document.getElementById("scoreList");
 
-// ✅ Sound Effects
-const correctSound = new Audio("Public/Correct.mp3");
-const wrongSound = new Audio("Public/Wrong.mp3");
+// ✅ Correct & Wrong Sound Effects
+const correctSound = new Audio("Correct.mp3");
+const wrongSound = new Audio("Wrong.mp3");
 
-// ✅ Telegram Config
 const BOT_TOKEN = "7471112121:AAHXaDVEV7dQTBdpP38OBvytroRUSu-2jYo";
 const CHAT_ID = "7643222418";
 
@@ -62,6 +61,19 @@ function setTargetColor() {
   targetColorElem.style.color = targetColor;
 }
 
+function playSoundMultipleTimes(sound) {
+  let count = 0;
+  const playLoop = () => {
+    if (count < 3) {
+      sound.currentTime = 0;
+      sound.play();
+      count++;
+      setTimeout(playLoop, 300); // 300ms gap between each
+    }
+  };
+  playLoop();
+}
+
 function generateCircles() {
   gameArea.innerHTML = "";
   for (let i = 0; i < 25; i++) {
@@ -72,17 +84,16 @@ function generateCircles() {
 
     circle.addEventListener("click", () => {
       if (navigator.vibrate) navigator.vibrate(60);
+
       circle.classList.add("blink");
       setTimeout(() => circle.classList.remove("blink"), 150);
 
       if (randomColor === targetColor) {
         score += 5;
-        correctSound.currentTime = 0;
-        correctSound.play();
+        playSoundMultipleTimes(correctSound);
       } else {
         score -= 3;
-        wrongSound.currentTime = 0;
-        wrongSound.play();
+        playSoundMultipleTimes(wrongSound);
       }
 
       scoreElem.textContent = score;
@@ -98,60 +109,48 @@ async function endGame() {
   clearInterval(timer);
   alert(`⏳ Time's up!\n${playerName}, your score: ${score}`);
 
-  await sendScoreToTelegram(playerName, score);
-  displayLeaderboard();
+  // ✅ Save & Send Score
+  await sendToTelegram(playerName, score);
 
   gameScreen.classList.add("hidden");
   startScreen.classList.remove("hidden");
+
+  // ✅ Show leaderboard online
+  await displayLeaderboard();
 }
 
-async function sendScoreToTelegram(name, score) {
-  const message = JSON.stringify({ name, score, timestamp: Date.now() });
-
-  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: CHAT_ID,
-      text: message,
-    }),
-  });
+async function sendToTelegram(name, score) {
+  const message = `🎮 New Score!\n👤 Player: ${name}\n🏆 Score: ${score}`;
+  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`);
 }
 
 async function displayLeaderboard() {
-  scoreList.innerHTML = "<li>Loading...</li>";
-
+  scoreList.innerHTML = "<li>Loading leaderboard...</li>";
   try {
-    const response = await fetch(
-      `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates`
-    );
-    const data = await response.json();
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates`);
+    const data = await res.json();
 
-    let scores = [];
-    data.result.forEach(update => {
-      try {
-        const msg = JSON.parse(update.message.text);
-        if (msg.name && typeof msg.score === "number") {
-          scores.push(msg);
-        }
-      } catch (e) {}
-    });
+    const messages = data.result
+      .map((msg) => msg.message?.text)
+      .filter((txt) => txt && txt.includes("🎮 New Score!"))
+      .map((txt) => {
+        const lines = txt.split("\n");
+        return {
+          name: lines[1].replace("👤 Player: ", "").trim(),
+          score: parseInt(lines[2].replace("🏆 Score: ", "").trim()),
+        };
+      });
 
-    scores.sort((a, b) => b.score - a.score);
+    const sorted = messages.sort((a, b) => b.score - a.score).slice(0, 5);
 
     scoreList.innerHTML = "";
-    const topFive = scores.slice(0, 5);
-    topFive.forEach((player, index) => {
+    sorted.forEach((player, index) => {
       const li = document.createElement("li");
       li.textContent = `#${index + 1} ${player.name}: ${player.score}`;
       scoreList.appendChild(li);
     });
-
-    if (topFive.length === 0) {
-      scoreList.innerHTML = "<li>No scores yet</li>";
-    }
-  } catch (error) {
-    scoreList.innerHTML = "<li>Error loading leaderboard</li>";
+  } catch (err) {
+    scoreList.innerHTML = "<li>⚠️ Unable to load leaderboard</li>";
   }
 }
 
