@@ -2,44 +2,51 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Arcade Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Color Rush Reflex 🎨⚡</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Name Input -->
-  <div id="startScreen">
-    <h1>🚀 Welcome to the Arcade Challenge</h1>
-    <p>Rules:</p>
-    <ul>
-      <li>⏳ You have 30 seconds</li>
-      <li>✅ Correct click = +10 points</li>
-      <li>❌ Wrong click = -5 points</li>
-      <li>🏆 Top 5 scores are shown in the leaderboard</li>
-    </ul>
+  <div class="game-container">
+    <h1 class="neon-title">🎨 Color Rush Reflex</h1>
+    <p class="tagline">Reflex Challenge!</p>
 
-    <input type="text" id="playerName" placeholder="Enter your name" />
-    <button id="startBtn">Start Game</button>
+    <!-- Rules Screen -->
+    <div id="rules-screen" class="screen active">
+      <h2>📜 How to Play</h2>
+      <ul class="rules">
+        <li>⏳ You have <b>30 seconds</b>.</li>
+        <li>🎯 Click ONLY the circles matching the <b>target color</b>.</li>
+        <li>✅ Correct click = +5 points</li>
+        <li>❌ Wrong click = -3 points</li>
+        <li>🏆 Highest scorer gets on the top!</li>
+      </ul>
+      <button id="showStart" class="glow-btn">Got it, Let's Play!</button>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen hidden">
+      <input type="text" id="playerName" placeholder="Enter your name" maxlength="15" />
+      <button id="startBtn" class="glow-btn">Start Game</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen hidden">
+      <p>🎯 Target Color: <span id="targetColor" class="target"></span></p>
+      <p>⏳ Time Left: <span id="timeLeft">30</span> sec</p>
+      <p>🏆 Score: <span id="score">0</span></p>
+      <div id="game-area"></div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div id="leaderboard">
+      <h2>🏆 Top Player</h2>
+      <ul id="scoreList"></ul>
+    </div>
   </div>
 
-  <!-- Game Screen -->
-  <div id="gameScreen" style="display:none;">
-    <h2 id="timer">Time: 30s</h2>
-    <h2 id="score">Score: 0</h2>
-    <button id="correctBtn">Correct</button>
-    <button id="wrongBtn">Wrong</button>
-  </div>
-
-  <!-- Leaderboard -->
-  <div id="leaderboard" style="display:none;">
-    <h2>🏆 Top 5 Players</h2>
-    <ul id="leaderList"></ul>
-    <button onclick="location.reload()">Play Again</button>
-  </div>
-
-  <!-- Sounds -->
-  <audio id="correctSound" src="/Correct.mp3"></audio>
-  <audio id="wrongSound" src="/Wrong.mp3"></audio>
+  <!-- Click Sound -->
+  <audio id="clickSound" src="https://cdn.pixabay.com/download/audio/2021/08/09/audio_1be2856b10.mp3?filename=beep-100299.mp3" preload="auto"></audio>
 
   <script src="script.js"></script>
 </body>
