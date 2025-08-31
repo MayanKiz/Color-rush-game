@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Color Rush Reflex 🎨⚡</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="game-container">
+    <h1>🎨 Color Rush Reflex</h1>
+    <p class="tagline">Click the correct color circles in <b>30 seconds!</b></p>
+
+    <!-- Name Input -->
+    <div id="start-screen">
+      <input type="text" id="playerName" placeholder="Enter your name" maxlength="15" />
+      <button id="startBtn">Start Game</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="hidden">
+      <p>Target Color: <span id="targetColor" class="target"></span></p>
+      <p>Time Left: <span id="timeLeft">30</span> sec</p>
+      <p>Score: <span id="score">0</span></p>
+      <div id="game-area"></div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div id="leaderboard">
+      <h2>🏆 Leaderboard</h2>
+      <ul id="scoreList"></ul>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
