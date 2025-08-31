@@ -6,12 +6,13 @@
 }
 
 body {
-  background: #0f172a;
+  background: radial-gradient(circle at top, #0f172a, #020617);
   color: #fff;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  overflow: hidden;
 }
 
 .game-container {
@@ -20,45 +21,56 @@ body {
   width: 90%;
 }
 
-h1 {
-  font-size: 2rem;
+.neon-title {
+  font-size: 2.2rem;
   color: #38bdf8;
+  text-shadow: 0 0 10px #38bdf8, 0 0 20px #0ea5e9;
 }
 
 .tagline {
   margin: 8px 0 20px;
+  color: #94a3b8;
 }
 
-#start-screen {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-#playerName {
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  outline: none;
-}
-
-button {
-  background: #38bdf8;
-  color: #000;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-button:hover {
-  background: #0ea5e9;
+.screen {
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 .hidden {
   display: none;
+  opacity: 0;
+}
+
+.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.rules {
+  text-align: left;
+  margin: 10px 0;
+  padding: 0 15px;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.glow-btn {
+  margin-top: 15px;
+  padding: 12px 20px;
+  background: #38bdf8;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #000;
+  font-size: 16px;
+  box-shadow: 0 0 10px #38bdf8, 0 0 20px #0ea5e9;
+  transition: 0.2s;
+}
+
+.glow-btn:hover {
+  background: #0ea5e9;
+  transform: scale(1.05);
 }
 
 #game-area {
@@ -74,11 +86,20 @@ button:hover {
   height: 50px;
   border-radius: 50%;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.1s;
 }
 
-.circle:hover {
-  transform: scale(1.1);
+.circle:active {
+  transform: scale(0.95);
+}
+
+.blink {
+  animation: blinkEffect 0.2s;
+}
+
+@keyframes blinkEffect {
+  0% { filter: brightness(1.5); }
+  100% { filter: brightness(1); }
 }
 
 #leaderboard {
