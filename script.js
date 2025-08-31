@@ -10,8 +10,6 @@ const scoreElem = document.getElementById("score");
 const timeElem = document.getElementById("timeLeft");
 const scoreList = document.getElementById("scoreList");
 const clickSound = document.getElementById("clickSound");
-const correctSound = document.getElementById("correctSound");
-const wrongSound = document.getElementById("wrongSound");
 
 const BOT_TOKEN = "7471112121:AAHXaDVEV7dQTBdpP38OBvytroRUSu-2jYo";
 const CHAT_ID = "7643222418";
@@ -69,22 +67,18 @@ function generateCircles() {
     circle.style.backgroundColor = randomColor;
 
     circle.addEventListener("click", () => {
-      if (randomColor === targetColor) {
-        correctSound.currentTime = 0;
-        correctSound.play();
-        score += 5;
-      } else {
-        wrongSound.currentTime = 0;
-        wrongSound.play();
-        score -= 3;
-      }
-
+      // Click Sound + Vibrate + Blink
       clickSound.currentTime = 0;
       clickSound.play();
       if (navigator.vibrate) navigator.vibrate(50);
       circle.classList.add("blink");
       setTimeout(() => circle.classList.remove("blink"), 150);
 
+      if (randomColor === targetColor) {
+        score += 5;
+      } else {
+        score -= 3;
+      }
       scoreElem.textContent = score;
       setTargetColor();
       generateCircles();
@@ -118,17 +112,16 @@ function displayLeaderboard() {
   let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
   leaderboard.sort((a, b) => b.score - a.score);
 
-  if (leaderboard.length === 0) {
+  if (leaderboard.length > 0) {
+    const topFive = leaderboard.slice(0, 5);
+    topFive.forEach((player, index) => {
+      const li = document.createElement("li");
+      li.textContent = `#${index + 1} ${player.name}: ${player.score}`;
+      scoreList.appendChild(li);
+    });
+  } else {
     scoreList.innerHTML = "<li>No scores yet</li>";
-    return;
   }
-
-  const topFive = leaderboard.slice(0, 5);
-  topFive.forEach((player, index) => {
-    const li = document.createElement("li");
-    li.textContent = `#${index + 1} ${player.name} - ${player.score}`;
-    scoreList.appendChild(li);
-  });
 }
 
 function sendToTelegram(name, score) {
