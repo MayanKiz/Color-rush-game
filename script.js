@@ -11,6 +11,10 @@ const timeElem = document.getElementById("timeLeft");
 const scoreList = document.getElementById("scoreList");
 const clickSound = document.getElementById("clickSound");
 
+// ✅ Correct & Wrong sounds
+const correctSound = new Audio("public/Correct.mp3");
+const wrongSound = new Audio("public/Wrong.mp3");
+
 const BOT_TOKEN = "7471112121:AAHXaDVEV7dQTBdpP38OBvytroRUSu-2jYo";
 const CHAT_ID = "7643222418";
 
@@ -67,18 +71,24 @@ function generateCircles() {
     circle.style.backgroundColor = randomColor;
 
     circle.addEventListener("click", () => {
-      // Click Sound + Vibrate + Blink
+      // 🔊 Click sound + Vibrate + Blink
       clickSound.currentTime = 0;
       clickSound.play();
       if (navigator.vibrate) navigator.vibrate(50);
       circle.classList.add("blink");
       setTimeout(() => circle.classList.remove("blink"), 150);
 
+      // ✅ Correct or ❌ Wrong Sound
       if (randomColor === targetColor) {
         score += 5;
+        correctSound.currentTime = 0;
+        correctSound.play();
       } else {
         score -= 3;
+        wrongSound.currentTime = 0;
+        wrongSound.play();
       }
+
       scoreElem.textContent = score;
       setTargetColor();
       generateCircles();
@@ -126,7 +136,9 @@ function displayLeaderboard() {
 
 function sendToTelegram(name, score) {
   const message = `🎮 New Score!\n👤 Player: ${name}\n🏆 Score: ${score}`;
-  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`);
+  fetch(
+    `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`
+  );
 }
 
 startBtn.addEventListener("click", startGame);
