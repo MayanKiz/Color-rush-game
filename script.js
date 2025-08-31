@@ -8,8 +8,8 @@ const scoreElem = document.getElementById("score");
 const timeElem = document.getElementById("timeLeft");
 const scoreList = document.getElementById("scoreList");
 
-const BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN";
-const CHAT_ID = "YOUR_TELEGRAM_CHAT_ID";
+const BOT_TOKEN = "7471112121:AAHXaDVEV7dQTBdpP38OBvytroRUSu-2jYo";
+const CHAT_ID = "7643222418";
 
 const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
 let targetColor = "";
