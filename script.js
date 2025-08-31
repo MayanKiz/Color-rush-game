@@ -23,7 +23,6 @@ let playerName = "";
 showStartBtn.addEventListener("click", () => {
   rulesScreen.classList.add("hidden");
   startScreen.classList.remove("hidden");
-  fetchLeaderboard();
 });
 
 function startGame() {
@@ -68,6 +67,8 @@ function generateCircles() {
 
     circle.addEventListener("click", () => {
       if (navigator.vibrate) navigator.vibrate(60);
+      circle.classList.add("blink");
+      setTimeout(() => circle.classList.remove("blink"), 150);
 
       if (randomColor === targetColor) {
         score += 5;
@@ -90,38 +91,37 @@ function endGame() {
   sendToTelegram(playerName, score);
   gameScreen.classList.add("hidden");
   startScreen.classList.remove("hidden");
-  fetchLeaderboard();
+  displayLeaderboard();
 }
 
+// ✅ Send Score to Telegram
 function sendToTelegram(name, score) {
-  const message = `🎮 Score Update\n👤 Player: ${name}\n🏆 Score: ${score}`;
+  const message = `SCORE|${name}|${score}`;
   fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`);
 }
 
-async function fetchLeaderboard() {
+// ✅ Fetch Leaderboard from Telegram
+async function displayLeaderboard() {
+  scoreList.innerHTML = "<li>Loading leaderboard...</li>";
+
   try {
     const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates`);
     const data = await res.json();
 
-    scoreList.innerHTML = "";
-
-    const messages = data.result
-      .filter(msg => msg.message && msg.message.chat.id == CHAT_ID)
-      .map(msg => msg.message.text)
-      .filter(text => text.startsWith("🎮 Score Update"));
-
-    const scores = messages.map(m => {
-      const nameMatch = m.match(/👤 Player: (.*)/);
-      const scoreMatch = m.match(/🏆 Score: (-?\d+)/);
-      return {
-        name: nameMatch ? nameMatch[1] : "Unknown",
-        score: scoreMatch ? parseInt(scoreMatch[1]) : 0,
-      };
+    let scores = [];
+    data.result.forEach(update => {
+      if (update.message && update.message.text && update.message.text.startsWith("SCORE|")) {
+        const parts = update.message.text.split("|");
+        if (parts.length === 3) {
+          scores.push({ name: parts[1], score: parseInt(parts[2]) });
+        }
+      }
     });
 
     scores.sort((a, b) => b.score - a.score);
-
     const topFive = scores.slice(0, 5);
+
+    scoreList.innerHTML = "";
     topFive.forEach((player, index) => {
       const li = document.createElement("li");
       li.textContent = `#${index + 1} ${player.name}: ${player.score}`;
@@ -131,11 +131,11 @@ async function fetchLeaderboard() {
     if (topFive.length === 0) {
       scoreList.innerHTML = "<li>No scores yet</li>";
     }
-  } catch (err) {
-    console.error("Error fetching leaderboard:", err);
-    scoreList.innerHTML = "<li>⚠️ Unable to load leaderboard</li>";
+  } catch (error) {
+    scoreList.innerHTML = "<li>Error loading leaderboard</li>";
+    console.error(error);
   }
 }
 
 startBtn.addEventListener("click", startGame);
-window.onload = fetchLeaderboard;
+window.onload = displayLeaderboard;
