@@ -1,116 +1,132 @@
-// Elements
+const showStartBtn = document.getElementById("showStart");
 const startBtn = document.getElementById("startBtn");
-const playerName = document.getElementById("playerName");
-const startScreen = document.getElementById("startScreen");
-const gameScreen = document.getElementById("gameScreen");
-const leaderboard = document.getElementById("leaderboard");
-const leaderList = document.getElementById("leaderList");
-const correctBtn = document.getElementById("correctBtn");
-const wrongBtn = document.getElementById("wrongBtn");
-const scoreEl = document.getElementById("score");
-const timerEl = document.getElementById("timer");
+const playerNameInput = document.getElementById("playerName");
+const gameScreen = document.getElementById("game-screen");
+const startScreen = document.getElementById("start-screen");
+const rulesScreen = document.getElementById("rules-screen");
+const targetColorElem = document.getElementById("targetColor");
+const gameArea = document.getElementById("game-area");
+const scoreElem = document.getElementById("score");
+const timeElem = document.getElementById("timeLeft");
+const scoreList = document.getElementById("scoreList");
 
-// Sounds
-const correctSound = document.getElementById("correctSound");
-const wrongSound = document.getElementById("wrongSound");
+const correctSound = new Audio("Correct.mp3");
+const wrongSound = new Audio("Wrong.mp3");
 
-// Telegram Bot Config
-const BOT_TOKEN = "7471112121:AAHXaDVEV7dQTBdpP38OBvytroRUSu-2jYo";  // <-- Replace with your token
-const CHAT_ID = "7643222418";      // <-- Replace with your chat ID
+const BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN";
+const CHAT_ID = "YOUR_TELEGRAM_CHAT_ID";
 
+const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+let targetColor = "";
 let score = 0;
-let time = 30;
-let player = "";
-let countdown;
+let timeLeft = 30;
+let timer = null;
+let playerName = "";
 
-// Start Game
-startBtn.addEventListener("click", () => {
-  player = playerName.value.trim();
-  if (player === "") {
-    alert("Please enter your name!");
+showStartBtn.addEventListener("click", () => {
+  rulesScreen.classList.add("hidden");
+  startScreen.classList.remove("hidden");
+});
+
+function startGame() {
+  playerName = playerNameInput.value.trim();
+  if (!playerName) {
+    alert("⚠️ Please enter your name first!");
     return;
   }
 
-  startScreen.style.display = "none";
-  gameScreen.style.display = "block";
+  startScreen.classList.add("hidden");
+  gameScreen.classList.remove("hidden");
 
   score = 0;
-  scoreEl.textContent = `Score: ${score}`;
-  timerEl.textContent = `Time: ${time}s`;
+  scoreElem.textContent = score;
+  timeLeft = 30;
+  timeElem.textContent = timeLeft;
 
-  startTimer();
-});
+  setTargetColor();
+  generateCircles();
 
-// Correct Click
-correctBtn.addEventListener("click", () => {
-  score += 10;
-  scoreEl.textContent = `Score: ${score}`;
-  correctSound.currentTime = 0;
-  correctSound.play();
-  navigator.vibrate(50);
-});
+  timer = setInterval(() => {
+    timeLeft--;
+    timeElem.textContent = timeLeft;
 
-// Wrong Click
-wrongBtn.addEventListener("click", () => {
-  score -= 5;
-  scoreEl.textContent = `Score: ${score}`;
-  wrongSound.currentTime = 0;
-  wrongSound.play();
-  navigator.vibrate([150, 100, 150]);
-});
-
-// Timer Function
-function startTimer() {
-  countdown = setInterval(() => {
-    time--;
-    timerEl.textContent = `Time: ${time}s`;
-
-    if (time <= 0) {
-      clearInterval(countdown);
-      endGame();
-    }
+    if (timeLeft <= 0) endGame();
   }, 1000);
 }
 
-// End Game
+function setTargetColor() {
+  targetColor = colors[Math.floor(Math.random() * colors.length)];
+  targetColorElem.textContent = targetColor;
+  targetColorElem.style.color = targetColor;
+}
+
+function generateCircles() {
+  gameArea.innerHTML = "";
+  for (let i = 0; i < 25; i++) {
+    const circle = document.createElement("div");
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    circle.classList.add("circle");
+    circle.style.backgroundColor = randomColor;
+
+    circle.addEventListener("click", () => {
+      if (randomColor === targetColor) {
+        correctSound.currentTime = 0;
+        correctSound.play();
+        score += 5;
+      } else {
+        wrongSound.currentTime = 0;
+        wrongSound.play();
+        score -= 3;
+      }
+      scoreElem.textContent = score;
+      setTargetColor();
+      generateCircles();
+    });
+
+    gameArea.appendChild(circle);
+  }
+}
+
 function endGame() {
-  gameScreen.style.display = "none";
-  leaderboard.style.display = "block";
+  clearInterval(timer);
+  alert(`⏳ Time's up!\n${playerName}, your score: ${score}`);
 
-  saveScore(player, score);
-  sendScoreToTelegram(player, score);
-  showLeaderboard();
+  saveScore(playerName, score);
+  sendToTelegram(playerName, score);
+
+  gameScreen.classList.add("hidden");
+  startScreen.classList.remove("hidden");
+  displayLeaderboard();
 }
 
-// Save Score in LocalStorage
 function saveScore(name, score) {
-  let scores = JSON.parse(localStorage.getItem("scores")) || [];
-  scores.push({ name, score });
-  scores.sort((a, b) => b.score - a.score);
-  scores = scores.slice(0, 5);
-  localStorage.setItem("scores", JSON.stringify(scores));
+  let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+  leaderboard.push({ name, score });
+  leaderboard.sort((a, b) => b.score - a.score);
+  localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
 }
 
-// Show Top 5 Players
-function showLeaderboard() {
-  const scores = JSON.parse(localStorage.getItem("scores")) || [];
-  leaderList.innerHTML = "";
-  scores.forEach((s, i) => {
+function displayLeaderboard() {
+  scoreList.innerHTML = "";
+  let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+
+  if (leaderboard.length === 0) {
+    scoreList.innerHTML = "<li>No scores yet</li>";
+    return;
+  }
+
+  // Show only top 5 players
+  leaderboard.slice(0, 5).forEach((player, index) => {
     const li = document.createElement("li");
-    li.textContent = `${i + 1}. ${s.name} — ${s.score} pts`;
-    leaderList.appendChild(li);
+    li.textContent = `#${index + 1} ${player.name} — ${player.score} pts`;
+    scoreList.appendChild(li);
   });
 }
 
-// Send Score to Telegram
-function sendScoreToTelegram(name, score) {
-  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: CHAT_ID,
-      text: `🎮 *New Score Update* 🎮\n\n👤 Player: ${name}\n🏆 Score: ${score}`,
-      parse_mode: "Markdown"
-    })
-  });
+function sendToTelegram(name, score) {
+  const message = `🎮 New Score!\n👤 Player: ${name}\n🏆 Score: ${score}`;
+  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}`);
 }
+
+startBtn.addEventListener("click", startGame);
+window.onload = displayLeaderboard;
