@@ -9,12 +9,10 @@ const gameArea = document.getElementById("game-area");
 const scoreElem = document.getElementById("score");
 const timeElem = document.getElementById("timeLeft");
 const scoreList = document.getElementById("scoreList");
+const clickSound = document.getElementById("clickSound");
 
-const correctSound = new Audio("Correct.mp3");
-const wrongSound = new Audio("Wrong.mp3");
-
-const BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN";
-const CHAT_ID = "YOUR_TELEGRAM_CHAT_ID";
+const BOT_TOKEN = "7471112121:AAHXaDVEV7dQTBdpP38OBvytroRUSu-2jYo";
+const CHAT_ID = "7643222418";
 
 const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
 let targetColor = "";
@@ -31,7 +29,7 @@ showStartBtn.addEventListener("click", () => {
 function startGame() {
   playerName = playerNameInput.value.trim();
   if (!playerName) {
-    alert("⚠️ Please enter your name first!");
+    alert("Please enter your name!");
     return;
   }
 
@@ -69,13 +67,16 @@ function generateCircles() {
     circle.style.backgroundColor = randomColor;
 
     circle.addEventListener("click", () => {
+      // Click Sound + Vibrate + Blink
+      clickSound.currentTime = 0;
+      clickSound.play();
+      if (navigator.vibrate) navigator.vibrate(50);
+      circle.classList.add("blink");
+      setTimeout(() => circle.classList.remove("blink"), 150);
+
       if (randomColor === targetColor) {
-        correctSound.currentTime = 0;
-        correctSound.play();
         score += 5;
       } else {
-        wrongSound.currentTime = 0;
-        wrongSound.play();
         score -= 3;
       }
       scoreElem.textContent = score;
@@ -109,18 +110,14 @@ function saveScore(name, score) {
 function displayLeaderboard() {
   scoreList.innerHTML = "";
   let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-
-  if (leaderboard.length === 0) {
-    scoreList.innerHTML = "<li>No scores yet</li>";
-    return;
-  }
-
-  // Show only top 5 players
-  leaderboard.slice(0, 5).forEach((player, index) => {
+  const topPlayer = leaderboard[0];
+  if (topPlayer) {
     const li = document.createElement("li");
-    li.textContent = `#${index + 1} ${player.name} — ${player.score} pts`;
+    li.textContent = `🥇 ${topPlayer.name}`;
     scoreList.appendChild(li);
-  });
+  } else {
+    scoreList.innerHTML = "<li>No scores yet</li>";
+  }
 }
 
 function sendToTelegram(name, score) {
