@@ -20,7 +20,7 @@ const CHAT_ID = "7643222418";
 const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
 let targetColor = "";
 let score = 0;
-let timeLeft = 30;
+let timeLeft = 50;
 let timer = null;
 let playerName = "";
 
@@ -41,7 +41,7 @@ function startGame() {
 
   score = 0;
   scoreElem.textContent = score;
-  timeLeft = 30;
+  timeLeft = 50;
   timeElem.textContent = timeLeft;
 
   setTargetColor();
