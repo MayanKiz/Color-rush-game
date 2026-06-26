@@ -17,3 +17,4 @@ After 30s, the game ends, and:
 Player score + name auto-sent to Telegram via my bot.
 
 Score saved in localStorage and displayed on a live leaderboard.
+yeayyy
