@@ -14,7 +14,7 @@ const scoreList = document.getElementById("scoreList");
 const correctSound = new Audio("Correct.mp3");
 const wrongSound = new Audio("Wrong.mp3");
 
-const BOT_TOKEN = "7471112121:AAHXaDVEV7dQTBdpP38OBvytroRUSu-2jYo";
+const BOT_TOKEN = "7471112121:AAEyXYz0RddrBXAFKdqsEF_gkViSvv9-Pz0";
 const CHAT_ID = "7643222418";
 
 const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
