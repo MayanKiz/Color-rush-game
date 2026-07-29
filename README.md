@@ -1,4 +1,4 @@
-Game Concept → "Color Rush Reflex" 🎨⚡
+Game Concept → "Color Rush Reflex" 
 
 A reflex-based arcade game:
 
