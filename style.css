@@ -67,3 +67,22 @@ h1 { margin: 22px 0 18px; } h2 { font-size: clamp(30px, 5vw, 48px); margin: 16px
 @keyframes card-glow { 0%, 100% { box-shadow: 0 25px 80px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.06); } 50% { box-shadow: 0 25px 90px rgba(30,118,255,.16), inset 0 1px rgba(255,255,255,.08); } }
 .hero-card, .setup-card, .result-card, .leaderboard-card { animation: screen-in .35s ease both, card-glow 6s ease-in-out 1s infinite; }
 @media (max-width: 620px) { .game-topline { align-items: center; } .game-topline > div { text-align: center; } .game-topline .back-button { margin-right: 7px; } .result-rankings { margin-bottom: 18px; } }
+
+/* Premium minimal finish */
+:root { --cyan: #e6c982; --purple: #a695ed; --pink: #e57a9d; --green: #72dfc0; --yellow: #f0d79e; --line: rgba(230, 201, 130, .16); --muted: #98a0ba; }
+body { background-color: #070811; }
+.brand-mark b, .highlight, .inline-button, .leader-score { color: var(--cyan); }
+.brand-dot { background: var(--cyan); box-shadow: 0 0 14px rgba(230,201,130,.7); }
+.primary-button { background: linear-gradient(110deg, #7162c3, #d3ad61); box-shadow: 0 12px 30px rgba(146,117,207,.2); }
+.primary-button:hover { box-shadow: 0 16px 36px rgba(211,173,97,.27); }
+.secondary-button { border-color: rgba(230,201,130,.22); }
+.target-container h2, .game-topline h2 strong, .final-score strong { color: var(--cyan); }
+.database-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid rgba(114,223,192,.24); border-radius: 999px; color: var(--green); background: rgba(114,223,192,.06); font: 700 8px 'Space Grotesk'; letter-spacing: .12em; }
+.database-status > span { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+.result-db-status { margin-left: auto; margin-right: 9px; padding: 4px 6px; font-size: 7px; }
+#error-state { display: none !important; }
+.site-footer { color: rgba(230,201,130,.58); }
+.creator-mark { display: inline-flex; align-items: center; gap: 6px; color: rgba(244,247,255,.68); text-decoration: none; letter-spacing: .04em; text-transform: none; transition: color .2s, transform .2s; }
+.creator-mark:hover { color: var(--cyan); transform: translateY(-1px); }
+.creator-mark svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+.creator-mark svg circle:last-child { fill: currentColor; stroke: none; }

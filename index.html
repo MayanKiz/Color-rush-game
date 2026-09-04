@@ -35,7 +35,7 @@
     <section id="start-screen" class="screen card setup-card hidden">
       <div class="eyebrow">PLAYER SETUP <span></span> 02</div>
       <h2>Ready when <em>you are.</em></h2>
-      <p class="section-copy">Your score will be saved locally and sent to Telegram after every completed round.</p>
+      <p class="section-copy">Your score is saved quietly after every completed round.</p>
       <label class="field-label" for="player-name">Display name</label>
       <input id="player-name" class="text-input" type="text" maxlength="15" placeholder="Enter your name" autocomplete="nickname">
       <span id="name-error" class="error-text hidden">Please enter a name between 2 and 15 characters.</span>
@@ -64,19 +64,18 @@
       <h2>That was <em>fast.</em></h2>
       <div class="final-score"><span>FINAL SCORE</span><strong id="final-score">0</strong><small>points</small></div>
       <div class="result-stats"><div><strong id="result-hits">0</strong><span>hits</span></div><div><strong id="result-accuracy">0%</strong><span>accuracy</span></div><div><strong id="result-best">0</strong><span>best score</span></div></div>
-      <div id="telegram-status" class="telegram-status"><span class="status-dot"></span><span id="telegram-status-text">Sending score to Telegram…</span></div>
-      <div class="result-rankings"><div class="mini-heading"><span>LIVE TOP 5</span><button id="btn-view-leaderboard" class="inline-button">View all →</button></div><ol id="result-leaderboard-list" class="mini-list"></ol></div><div class="result-actions"><button id="btn-play-again" class="primary-button">Play again <span>↗</span></button><button id="btn-share" class="secondary-button">Share result</button></div><button id="btn-result-back" class="text-button">← Back to setup</button>
+      <div class="result-rankings"><div class="mini-heading"><span>LIVE TOP 5</span><span id="result-database-status" class="database-status result-db-status hidden"><span></span><b>SYNCED</b></span><button id="btn-view-leaderboard" class="inline-button">View all →</button></div><ol id="result-leaderboard-list" class="mini-list"></ol></div><div class="result-actions"><button id="btn-play-again" class="primary-button">Play again <span>↗</span></button><button id="btn-share" class="secondary-button">Share result</button></div><button id="btn-result-back" class="text-button">← Back to setup</button>
       <p id="share-feedback" class="microcopy hidden">Result copied. Send it to your squad.</p>
     </section>
 
     <section id="leaderboard-screen" class="screen card leaderboard-card hidden">
-      <div class="leaderboard-header"><div><div class="eyebrow">LOCAL RANKINGS <span></span> 05</div><h2>Top <em>players.</em></h2></div><div id="live-indicator" class="live-badge hidden">LIVE</div></div>
+      <div class="leaderboard-header"><div><div class="eyebrow">GLOBAL RANKINGS <span></span> 05</div><h2>Top <em>players.</em></h2></div><div id="live-indicator" class="database-status hidden"><span></span><b>SYNCED</b></div></div>
       <div id="loading-state" class="loading-text hidden">Syncing scores…</div><div id="error-state" class="error-text hidden">Could not load online scores. Showing local scores.</div>
       <ol id="leaderboard-ul" class="leaderboard-list"></ol>
       <button id="btn-leaderboard-again" class="secondary-button">Play another round</button><button id="btn-leaderboard-back" class="text-button">← Back to results</button>
     </section>
 
-    <footer class="site-footer"><span>COLOR RUSH / 2026</span><span>Built for reaction speed</span></footer>
+    <footer class="site-footer"><span>COLOR RUSH / 2026</span><a class="creator-mark" href="https://instagram.com/rao.mynkk" target="_blank" rel="noreferrer" aria-label="Instagram — rao.mynkk"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4.2"></circle><circle cx="17.4" cy="6.7" r="1"></circle></svg><span>rao.mynkk</span></a></footer>
   </main>
   <script src="script.js"></script>
 </body>

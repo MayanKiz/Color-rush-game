@@ -114,15 +114,9 @@ async function endGame() {
   bestScore = Math.max(bestScore, score); localStorage.setItem('colorRushBest', String(bestScore));
   setText('final-score', score); setText('result-hits', hits); setText('result-best', bestScore); setText('result-accuracy', attempts ? `${Math.round((hits / attempts) * 100)}%` : '0%');
   $('result-badge').textContent = score >= bestScore && score > 0 ? 'NEW PERSONAL BEST' : 'ROUND COMPLETE';
-  const payload = makePayload(); saveLocalScore(payload); showScreen($('result-screen')); updateTelegramStatus('pending');
-  const response = await submitScore(payload);
-  updateTelegramStatus(response.telegramSent ? 'sent' : 'offline');
+  const payload = makePayload(); saveLocalScore(payload); showScreen($('result-screen'));
+  await submitScore(payload);
   await loadLeaderboard(true);
-}
-
-function updateTelegramStatus(state) {
-  const box = $('telegram-status'); box.className = `telegram-status ${state}`;
-  setText('telegram-status-text', state === 'sent' ? 'Score sent to Telegram' : state === 'offline' ? 'Telegram is not connected yet' : 'Saving score and sending to Telegram…');
 }
 
 async function fetchHostedScores() {
@@ -138,8 +132,16 @@ function localScores() {
 async function loadLeaderboard(isResult = false) {
   $('loading-state').classList.remove('hidden'); $('error-state').classList.add('hidden');
   let scores;
-  try { scores = await fetchHostedScores(); $('live-indicator').classList.remove('hidden'); }
-  catch (_) { scores = localScores().slice(0, 10); $('live-indicator').classList.add('hidden'); $('error-state').classList.remove('hidden'); }
+  try {
+    scores = await fetchHostedScores();
+    $('live-indicator').classList.remove('hidden');
+    $('result-database-status').classList.remove('hidden');
+  } catch (_) {
+    scores = localScores().slice(0, 10);
+    $('live-indicator').classList.add('hidden');
+    $('result-database-status').classList.add('hidden');
+    $('error-state').classList.remove('hidden');
+  }
   $('loading-state').classList.add('hidden'); lastScores = scores;
   renderLeaderboard(scores, $('leaderboard-ul')); if (isResult) renderLeaderboard(scores.slice(0, 5), $('result-leaderboard-list'), true);
 }
