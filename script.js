@@ -44,6 +44,32 @@ function playTone(correct) {
   if (navigator.vibrate) navigator.vibrate(correct ? 25 : [25, 25, 25]);
 }
 
+async function requestGameFullscreen() {
+  try {
+    if (!document.fullscreenElement && !document.documentElement.requestFullscreen) return false;
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    document.body.classList.add('is-fullscreen');
+    $('fullscreen-hint').classList.add('is-ready');
+    return true;
+  } catch (_) {
+    $('fullscreen-hint').classList.remove('is-ready');
+    return false;
+  }
+}
+
+function syncFullscreenHint() {
+  const active = Boolean(document.fullscreenElement);
+  document.body.classList.toggle('is-fullscreen', active);
+  $('fullscreen-hint').classList.toggle('is-ready', active);
+  $('btn-start-game').innerHTML = active ? 'Start challenge <span>→</span>' : 'Open full screen <span>↗</span>';
+}
+
+function validatePlayer() {
+  const value = $('player-name').value.trim();
+  if (value.length < 2 || value.length > 15) { $('name-error').classList.remove('hidden'); return false; }
+  $('name-error').classList.add('hidden'); playerName = value; return true;
+}
+
 function startGame() {
   score = 0; timeLeft = GAME_DURATION; streak = 0; hits = 0; attempts = 0; rounds = 0;
   running = true; paused = false; submitted = false;
@@ -65,7 +91,7 @@ function nextBoard() {
   if (!running) return;
   rounds += 1; $('round-counter').textContent = `ROUND ${String(rounds).padStart(2, '0')}`;
   currentTarget = colorPalette[Math.floor(Math.random() * colorPalette.length)];
-  const target = $('target-color-display'); target.textContent = currentTarget.name.toUpperCase(); target.style.color = currentTarget.hex; target.style.textShadow = `0 0 26px ${currentTarget.hex}66`;
+  const target = $('target-color-display'); target.textContent = currentTarget.name.toUpperCase(); target.style.color = currentTarget.hex; target.style.textShadow = `0 0 26px ${currentTarget.hex}66`; $('target-swatch').style.backgroundColor = currentTarget.hex; $('target-swatch').style.boxShadow = `0 0 20px ${currentTarget.hex}99`;
   const colors = Array.from({ length: TOTAL_CIRCLES }, () => colorPalette[Math.floor(Math.random() * colorPalette.length)]);
   colors[Math.floor(Math.random() * colors.length)] = currentTarget;
   const fragment = document.createDocumentFragment();
@@ -158,8 +184,11 @@ function renderLeaderboard(scores, list, mini = false) {
 function leaveGame() { running = false; paused = false; clearInterval(timerId); showScreen($('start-screen')); }
 $('btn-got-it').addEventListener('click', () => { showScreen($('start-screen')); $('player-name').focus(); });
 $('btn-back-rules').addEventListener('click', () => showScreen($('rules-screen')));
-$('btn-start-game').addEventListener('click', () => { const value = $('player-name').value.trim(); if (value.length < 2 || value.length > 15) { $('name-error').classList.remove('hidden'); return; } $('name-error').classList.add('hidden'); playerName = value; startGame(); });
+$('btn-start-game').addEventListener('click', async () => { if (!validatePlayer()) return; await requestGameFullscreen(); startGame(); });
+$('btn-window-start').addEventListener('click', () => { if (!validatePlayer()) return; startGame(); });
+document.addEventListener('fullscreenchange', syncFullscreenHint);
 $('player-name').addEventListener('keydown', (event) => { if (event.key === 'Enter') $('btn-start-game').click(); });
+
 $('btn-pause').addEventListener('click', () => togglePause()); $('btn-resume').addEventListener('click', () => togglePause(false));
 $('btn-game-back').addEventListener('click', leaveGame); $('btn-quit').addEventListener('click', endGame);
 $('btn-play-again').addEventListener('click', () => { $('player-name').value = playerName; showScreen($('start-screen')); $('player-name').focus(); });

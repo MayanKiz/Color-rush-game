@@ -86,3 +86,25 @@ body { background-color: #070811; }
 .creator-mark:hover { color: var(--cyan); transform: translateY(-1px); }
 .creator-mark svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.7; }
 .creator-mark svg circle:last-child { fill: currentColor; stroke: none; }
+
+/* Fullscreen-first start flow and target lockup */
+.fullscreen-hint { display: flex; align-items: center; gap: 8px; margin: 14px 0 18px; color: rgba(230,201,130,.7); font-size: 11px; }
+.fullscreen-hint > span:first-child { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 9px rgba(230,201,130,.7); }
+.fullscreen-hint.is-ready { color: var(--green); }
+.fullscreen-hint.is-ready > span:first-child { background: var(--green); box-shadow: 0 0 9px var(--green); }
+#btn-window-start { margin-top: 12px; }
+body.is-fullscreen .app-shell { width: min(100% - 64px, 1080px); }
+body.is-fullscreen .brand-bar { top: 26px; }
+body.is-fullscreen .site-footer { bottom: 24px; }
+body.is-fullscreen .game-layout { width: min(100%, 920px); }
+.game-topline { align-items: center; }
+.target-lock { display: flex; min-width: 210px; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.target-kicker { display: flex; align-items: center; gap: 7px; color: var(--muted); font: 700 9px 'Space Grotesk'; letter-spacing: .2em; }
+.target-kicker i { display: block; width: 22px; height: 1px; background: var(--purple); }
+.target-name-line { display: flex; align-items: center; gap: 9px; }
+.target-name-line strong { font: 700 clamp(28px, 5vw, 42px) 'Space Grotesk'; letter-spacing: -.04em; }
+.target-swatch { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 18px currentColor; }
+.target-note { color: var(--muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+.creator-mark { padding: 5px 8px 5px 6px; border: 1px solid rgba(230,201,130,.22); border-radius: 9px; background: rgba(230,201,130,.045); }
+.creator-mark svg { width: 15px; height: 15px; }
+@media (max-width: 620px) { body.is-fullscreen .app-shell { width: min(100% - 24px, 540px); } .target-lock { min-width: 170px; } .target-name-line strong { font-size: 30px; } .target-swatch { width: 10px; height: 10px; } }

@@ -35,7 +35,7 @@
     <section id="start-screen" class="screen card setup-card hidden">
       <div class="eyebrow">PLAYER SETUP <span></span> 02</div>
       <h2>Ready when <em>you are.</em></h2>
-      <p class="section-copy">Your score is saved quietly after every completed round.</p>
+      <p class="section-copy">Your score is saved quietly after every completed round.</p><div id="fullscreen-hint" class="fullscreen-hint"><span></span><span>Fullscreen gives the best play experience</span></div>
       <label class="field-label" for="player-name">Display name</label>
       <input id="player-name" class="text-input" type="text" maxlength="15" placeholder="Enter your name" autocomplete="nickname">
       <span id="name-error" class="error-text hidden">Please enter a name between 2 and 15 characters.</span>
@@ -43,12 +43,13 @@
         <div><span class="field-label">Round length</span><strong>30 seconds</strong></div>
         <div><span class="field-label">Scoring</span><strong>+5 / −3</strong></div>
       </div>
-      <button id="btn-start-game" class="primary-button">Start challenge <span>→</span></button>
+      <button id="btn-start-game" class="primary-button">Open full screen <span>↗</span></button>
+      <button id="btn-window-start" class="text-button">Continue in window</button>
       <button id="btn-back-rules" class="text-button">← Back to rules</button>
     </section>
 
     <section id="game-screen" class="screen game-layout hidden">
-      <div class="game-topline"><button id="btn-game-back" class="back-button">← Back</button><div><span class="eyebrow">LIVE ROUND <span></span> 03</span><h2>Lock on: <strong id="target-color-display">RED</strong></h2></div><button id="btn-pause" class="icon-button" aria-label="Pause game">Ⅱ</button></div>
+      <div class="game-topline"><button id="btn-game-back" class="back-button">← Back</button><div class="target-lock"><span class="target-kicker">TARGET COLOR <i></i></span><div class="target-name-line"><span id="target-swatch" class="target-swatch"></span><strong id="target-color-display">RED</strong></div><span class="target-note">match the orb</span></div><button id="btn-pause" class="icon-button" aria-label="Pause game">Ⅱ</button></div>
       <div class="hud-grid">
         <div class="hud-card timer-card"><span class="hud-label">TIME LEFT</span><strong id="time-left">30.0</strong><div class="progress-track"><span id="time-progress"></span></div></div>
         <div class="hud-card"><span class="hud-label">SCORE</span><strong id="current-score">0</strong><span id="score-delta" class="score-delta"></span></div>
