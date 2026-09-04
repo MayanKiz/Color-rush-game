@@ -131,3 +131,25 @@ body.is-fullscreen .game-layout { width: min(100%, 920px); }
 .countdown-line { color: rgba(247,244,236,.42); letter-spacing: .45em; }
 .countdown-pop { animation: countdown-pop .62s cubic-bezier(.18,.8,.22,1) both; }
 @keyframes countdown-pop { 0% { opacity: 0; transform: scale(.6); filter: blur(10px); } 45% { opacity: 1; transform: scale(1.08); filter: blur(0); } 100% { opacity: .92; transform: scale(1); } }
+
+/* One-time visual How to Play guide */
+body.guide-open { overflow: hidden; }
+.guide-overlay { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 22px; background: rgba(2,4,13,.84); backdrop-filter: blur(18px); overflow-y: auto; }
+.guide-modal { position: relative; width: min(100%, 470px); max-height: min(94vh, 760px); overflow: auto; padding: 28px; border: 1px solid rgba(166,149,237,.28); border-radius: 24px; background: linear-gradient(150deg, rgba(17,25,60,.98), rgba(8,12,34,.98)); box-shadow: 0 28px 80px rgba(0,0,0,.55), 0 0 70px rgba(166,149,237,.12); animation: guide-in .42s cubic-bezier(.2,.8,.2,1) both; }
+.guide-close { position: absolute; top: 18px; right: 18px; width: 32px; height: 32px; border: 1px solid rgba(247,244,236,.14); border-radius: 50%; color: var(--muted); background: rgba(255,255,255,.04); font-size: 22px; line-height: 1; cursor: pointer; transition: color .2s, transform .2s, border-color .2s; }
+.guide-close:hover { color: var(--text); border-color: rgba(230,201,130,.55); transform: rotate(90deg); }
+.guide-modal h2 { margin: 18px 0 16px; font-size: clamp(28px, 6vw, 40px); line-height: .98; }
+.guide-visual { position: relative; width: 100%; margin: 0 0 18px; overflow: hidden; border: 1px solid rgba(166,149,237,.2); border-radius: 16px; background: #080d27; }
+.guide-visual::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, transparent 72%, rgba(8,13,39,.52)); }
+.guide-visual img { display: block; width: 100%; max-height: 300px; object-fit: cover; object-position: center 49%; }
+.guide-steps { display: grid; gap: 8px; margin-bottom: 18px; }
+.guide-steps > div { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid rgba(247,244,236,.08); border-radius: 11px; background: rgba(255,255,255,.03); color: var(--muted); font-size: 12px; line-height: 1.35; }
+.guide-steps b { flex: 0 0 28px; color: var(--gold); font: 700 10px 'Space Grotesk'; letter-spacing: .08em; }
+.guide-steps strong { color: var(--text); font-weight: 600; }
+.guide-modal .primary-button { margin-top: 2px; }
+@keyframes guide-in { from { opacity: 0; transform: translateY(22px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 520px) { .guide-overlay { padding: 12px; } .guide-modal { padding: 24px 18px 18px; border-radius: 20px; } .guide-visual img { max-height: 235px; } }
+
+.guide-visual { height: clamp(250px, 42vw, 340px); }
+.guide-visual img { height: 100%; max-height: none; object-fit: contain; object-position: center; background: #080d27; }
+@media (max-width: 520px) { .guide-visual { height: 260px; } .guide-visual img { max-height: none; } }

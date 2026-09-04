@@ -13,6 +13,20 @@
 </head>
 <body>
   <div id="countdown-overlay" class="countdown-overlay hidden" aria-live="assertive" aria-atomic="true"><span class="countdown-kicker">GET READY</span><strong id="countdown-value">3</strong><span class="countdown-line">COLOR RUSH</span></div>
+  <div id="guide-overlay" class="guide-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+    <div class="guide-modal">
+      <button id="btn-guide-back" class="guide-close" aria-label="Close guide">×</button>
+      <div class="eyebrow">QUICK GUIDE <span></span> 03</div>
+      <h2 id="guide-title">Know the move.<br><em>Own the board.</em></h2>
+      <div class="guide-visual"><img src="assets/how-to-play-guide.png" alt="A red target color points to a matching red orb in a colorful orb grid."></div>
+      <div class="guide-steps">
+        <div><b>01</b><span><strong>Target color</strong> yahan upar bataya jayega.</span></div>
+        <div><b>02</b><span>Usi color ke orb par <strong>tap</strong> karein.</span></div>
+        <div><b>03</b><span>Correct <strong>+5</strong>, wrong orb <strong>−3</strong>.</span></div>
+      </div>
+      <button id="btn-guide-start" class="primary-button">Got it — start in 3s <span>→</span></button>
+    </div>
+  </div>
   <main class="app-shell">
     <header class="brand-bar">
       <div class="brand-mark"><span class="brand-dot"></span><span>COLOR <b>RUSH</b></span></div>

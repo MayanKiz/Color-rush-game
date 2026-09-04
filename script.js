@@ -70,6 +70,19 @@ function validatePlayer() {
   $('name-error').classList.add('hidden'); playerName = value; return true;
 }
 
+function openGuide() {
+  $('guide-overlay').classList.remove('hidden'); document.body.classList.add('guide-open'); $('btn-guide-start').focus();
+}
+
+function closeGuide() {
+  $('guide-overlay').classList.add('hidden'); document.body.classList.remove('guide-open');
+}
+
+function beginChallenge() {
+  if (localStorage.getItem('colorRushGuideSeen') !== '1') openGuide();
+  else startCountdown();
+}
+
 function startCountdown() {
   clearTimeout(countdownTimerId);
   countdownActive = true;
@@ -208,7 +221,9 @@ $('btn-enter-fullscreen').addEventListener('click', async () => { const entered 
 $('btn-skip-fullscreen').addEventListener('click', () => showScreen($('rules-screen')));
 $('btn-got-it').addEventListener('click', () => { showScreen($('start-screen')); $('player-name').focus(); });
 $('btn-back-rules').addEventListener('click', () => showScreen($('rules-screen')));
-$('btn-start-game').addEventListener('click', () => { if (!validatePlayer()) return; startCountdown(); });
+$('btn-start-game').addEventListener('click', () => { if (!validatePlayer()) return; beginChallenge(); });
+$('btn-guide-back').addEventListener('click', () => { closeGuide(); showScreen($('start-screen')); });
+$('btn-guide-start').addEventListener('click', () => { localStorage.setItem('colorRushGuideSeen', '1'); closeGuide(); startCountdown(); });
 document.addEventListener('fullscreenchange', syncFullscreenHint);
 $('player-name').addEventListener('keydown', (event) => { if (event.key === 'Enter') $('btn-start-game').click(); });
 
