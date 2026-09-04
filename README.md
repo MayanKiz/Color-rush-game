@@ -29,7 +29,15 @@ A successful response returns `ok: true`, the bot username, and the destination 
 
 ## Hosted leaderboard
 
-The browser reads `/api/leaderboard`, while `/api/submit-score` writes the result. Run [`database/schema.sql`](database/schema.sql) once in the Neon SQL editor. The project accepts `DATABASE_URL`, `POSTGRES_URL`, or `NEON_DATABASE_URL`. If hosted services are unavailable, the game falls back to local browser scores.
+The browser reads `/api/leaderboard`, while `/api/submit-score` writes the result. The project accepts `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `POSTGRES_URL`, `POSTGRES_URL_NON_POOLING`, or `NEON_DATABASE_URL`. Both API routes automatically create the `scores` table and index if they do not exist, although running [`database/schema.sql`](database/schema.sql) once in the Neon SQL editor is still recommended.
+
+To check the deployed database without exposing credentials, open:
+
+```text
+https://YOUR-DOMAIN.vercel.app/api/database-health
+```
+
+A successful response returns `ok: true`, `databaseConfigured: true`, `scoresTable: true`, and a `rowCount`. If it reports `No Neon/Postgres environment variable found`, connect Neon to the correct Vercel project and redeploy. If it reports a connection error, check the Neon integration environment scope and redeploy. If hosted services are unavailable, the game falls back to local browser scores.
 
 ## Verification
 

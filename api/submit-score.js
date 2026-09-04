@@ -1,8 +1,12 @@
 import { neon } from '@neondatabase/serverless';
 
+function connectionString() {
+  return process.env.DATABASE_URL || process.env.DATABASE_URL_UNPOOLED || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING || process.env.NEON_DATABASE_URL;
+}
+
 function databaseClient() {
-  const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL;
-  return connectionString ? neon(connectionString) : null;
+  const url = connectionString();
+  return url ? neon(url) : null;
 }
 
 function cleanPayload(body = {}) {
@@ -15,8 +19,24 @@ function cleanPayload(body = {}) {
   return { playerName, score, hits, attempts, accuracy };
 }
 
+async function ensureSchema(sql) {
+  await sql`
+    create table if not exists scores (
+      id bigserial primary key,
+      player_name varchar(15) not null,
+      score integer not null default 0,
+      hits integer not null default 0,
+      attempts integer not null default 0,
+      accuracy integer not null default 0,
+      created_at timestamptz not null default now()
+    )
+  `;
+  await sql`create index if not exists scores_score_created_idx on scores (score desc, created_at asc)`;
+}
+
 async function storeScore(sql, payload) {
   if (!sql) return { saved: false, configured: false };
+  await ensureSchema(sql);
   await sql`
     insert into scores (player_name, score, hits, attempts, accuracy)
     values (${payload.playerName}, ${payload.score}, ${payload.hits}, ${payload.attempts}, ${payload.accuracy})
@@ -37,7 +57,6 @@ async function sendTelegram(payload) {
     `Time: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`
   ].join('\n');
 
-  // Telegram bot tokens contain a colon. Keep the token unencoded in the path.
   const telegramResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

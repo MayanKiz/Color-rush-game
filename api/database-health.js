@@ -4,11 +4,6 @@ function connectionString() {
   return process.env.DATABASE_URL || process.env.DATABASE_URL_UNPOOLED || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING || process.env.NEON_DATABASE_URL;
 }
 
-function databaseClient() {
-  const url = connectionString();
-  return url ? neon(url) : null;
-}
-
 async function ensureSchema(sql) {
   await sql`
     create table if not exists scores (
@@ -26,20 +21,17 @@ async function ensureSchema(sql) {
 
 export default async function handler(request, response) {
   if (request.method !== 'GET') return response.status(405).json({ ok: false, error: 'Method not allowed' });
-  const sql = databaseClient();
-  if (!sql) return response.status(503).json({ ok: false, error: 'Database is not configured' });
+  const url = connectionString();
+  if (!url) return response.status(503).json({ ok: false, databaseConfigured: false, error: 'No Neon/Postgres environment variable found' });
 
   try {
+    const sql = neon(url);
+    await sql`select 1 as connected`;
     await ensureSchema(sql);
-    const rows = await sql`
-      select player_name as "playerName", score, hits, attempts, accuracy, created_at as "createdAt"
-      from scores
-      order by score desc, created_at asc
-      limit 10
-    `;
-    return response.status(200).json({ ok: true, scores: rows });
+    const rows = await sql`select count(*)::int as count from scores`;
+    return response.status(200).json({ ok: true, databaseConfigured: true, scoresTable: true, rowCount: rows[0]?.count || 0 });
   } catch (error) {
-    console.error('leaderboard error', error);
-    return response.status(500).json({ ok: false, error: 'Could not load leaderboard' });
+    console.error('database health error', error);
+    return response.status(502).json({ ok: false, databaseConfigured: true, scoresTable: false, error: String(error.message || 'Database connection failed').slice(0, 180) });
   }
 }
