@@ -1,103 +1,84 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Color Rush Reflex</title>
-    
-    <!-- Google Fonts for Neon Aesthetic -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Styles -->
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#050817">
+  <meta name="description" content="Color Rush — a fast neon color-matching reflex challenge.">
+  <title>Color Rush — Reflex Arena</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <main class="app-shell">
+    <header class="brand-bar">
+      <div class="brand-mark"><span class="brand-dot"></span><span>COLOR <b>RUSH</b></span></div>
+      <span class="version-pill">REFLEX ARENA</span>
+    </header>
 
-    <div class="app-container">
-        
-        <!-- RULES SCREEN -->
-        <div id="rules-screen" class="screen glass-card">
-            <h1 class="neon-title">🎨 Color Rush<br><span class="highlight">Reflex</span></h1>
-            
-            <div class="rules-content">
-                <h2>📜 How to Play</h2>
-                <ul>
-                    <li>⏳ You have <strong>30 seconds</strong>.</li>
-                    <li>🎯 Click ONLY the circles matching the <strong>target color</strong>.</li>
-                    <li>✅ Correct click = <strong>+5 points</strong></li>
-                    <li>❌ Wrong click = <strong>-3 points</strong></li>
-                    <li>🏆 Highest scorer gets on the top!</li>
-                </ul>
-            </div>
-            
-            <button id="btn-got-it" class="neon-button">Got it, Let's Play!</button>
-        </div>
+    <section id="rules-screen" class="screen card hero-card">
+      <div class="eyebrow">NEURAL SPEED TEST <span></span> 01</div>
+      <h1>Match the color.<br><em>Beat the clock.</em></h1>
+      <p class="hero-copy">Train your reaction speed in a neon arena. Find the target color before the board shifts again.</p>
+      <div class="rule-grid">
+        <div class="rule-item"><strong>+5</strong><span>correct hit</span></div>
+        <div class="rule-item"><strong>−3</strong><span>wrong hit</span></div>
+        <div class="rule-item"><strong>30s</strong><span>per round</span></div>
+      </div>
+      <div class="how-row"><span class="step-number">01</span><span>Look at the target chip</span><span class="step-number">02</span><span>Tap matching orbs</span><span class="step-number">03</span><span>Climb the board</span></div>
+      <button id="btn-got-it" class="primary-button">Enter the arena <span>↗</span></button>
+      <p class="microcopy">Fast hands. Clear eyes. No second chances.</p>
+    </section>
 
-        <!-- START SCREEN -->
-        <div id="start-screen" class="screen glass-card hidden">
-            <h1 class="neon-title">Player <span class="highlight">Setup</span></h1>
-            
-            <div class="input-group">
-                <label for="player-name">Enter your name</label>
-                <input type="text" id="player-name" placeholder="Max 15 characters" maxlength="15" autocomplete="off">
-                <span id="name-error" class="error-text hidden">Please enter a valid name!</span>
-            </div>
-            
-            <button id="btn-start-game" class="neon-button">Start Game</button>
-        </div>
+    <section id="start-screen" class="screen card setup-card hidden">
+      <div class="eyebrow">PLAYER SETUP <span></span> 02</div>
+      <h2>Ready when <em>you are.</em></h2>
+      <p class="section-copy">Your score will be saved locally and sent to Telegram after every completed round.</p>
+      <label class="field-label" for="player-name">Display name</label>
+      <input id="player-name" class="text-input" type="text" maxlength="15" placeholder="Enter your name" autocomplete="nickname">
+      <span id="name-error" class="error-text hidden">Please enter a name between 2 and 15 characters.</span>
+      <div class="setup-options">
+        <div><span class="field-label">Round length</span><strong>30 seconds</strong></div>
+        <div><span class="field-label">Scoring</span><strong>+5 / −3</strong></div>
+      </div>
+      <button id="btn-start-game" class="primary-button">Start challenge <span>→</span></button>
+      <button id="btn-back-rules" class="text-button">← Read the rules again</button>
+    </section>
 
-        <!-- GAME SCREEN -->
-        <div id="game-screen" class="screen hidden">
-            <div class="game-header glass-card">
-                <div class="target-container">
-                    <span>🎯 Target:</span>
-                    <h2 id="target-color-display">Red</h2>
-                </div>
-                
-                <div class="stats-container">
-                    <div class="stat-box">
-                        <span class="stat-label">⏳ Time Left</span>
-                        <span id="time-left" class="stat-value">30s</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">🏆 Score</span>
-                        <span id="current-score" class="stat-value">0</span>
-                    </div>
-                </div>
-            </div>
+    <section id="game-screen" class="screen game-layout hidden">
+      <div class="game-topline"><div><span class="eyebrow">LIVE ROUND <span></span> 03</span><h2>Lock on: <strong id="target-color-display">RED</strong></h2></div><button id="btn-pause" class="icon-button" aria-label="Pause game">Ⅱ</button></div>
+      <div class="hud-grid">
+        <div class="hud-card timer-card"><span class="hud-label">TIME LEFT</span><strong id="time-left">30.0</strong><div class="progress-track"><span id="time-progress"></span></div></div>
+        <div class="hud-card"><span class="hud-label">SCORE</span><strong id="current-score">0</strong><span id="score-delta" class="score-delta"></span></div>
+        <div class="hud-card"><span class="hud-label">STREAK</span><strong id="current-streak">0</strong><span id="streak-label">build it</span></div>
+      </div>
+      <div class="arena-wrap"><div class="arena-caption"><span>SELECT THE MATCHING ORB</span><span id="round-counter">ROUND 01</span></div><div id="game-board" class="grid-board" aria-label="Color matching game board"></div><div id="pause-overlay" class="pause-overlay hidden"><strong>PAUSED</strong><span>Take a breath, then resume.</span><button id="btn-resume" class="primary-button">Resume <span>→</span></button></div></div>
+      <div class="game-footer"><span id="feedback-text">Find the target.</span><button id="btn-quit" class="text-button danger-button">End round</button></div>
+    </section>
 
-            <div id="game-board" class="grid-board glass-card">
-                <!-- 25 Circles generated by JS -->
-            </div>
-        </div>
+    <section id="result-screen" class="screen card result-card hidden">
+      <div class="eyebrow">ROUND COMPLETE <span></span> 04</div>
+      <div id="result-badge" class="result-badge">NEW RUN</div>
+      <h2>That was <em>fast.</em></h2>
+      <div class="final-score"><span>FINAL SCORE</span><strong id="final-score">0</strong><small>points</small></div>
+      <div class="result-stats"><div><strong id="result-hits">0</strong><span>hits</span></div><div><strong id="result-accuracy">0%</strong><span>accuracy</span></div><div><strong id="result-best">0</strong><span>best score</span></div></div>
+      <div id="telegram-status" class="telegram-status"><span class="status-dot"></span><span id="telegram-status-text">Sending score to Telegram…</span></div>
+      <div class="result-actions"><button id="btn-play-again" class="primary-button">Play again <span>↗</span></button><button id="btn-share" class="secondary-button">Share result</button></div><button id="btn-view-leaderboard" class="text-button">View leaderboard →</button>
+      <p id="share-feedback" class="microcopy hidden">Result copied. Send it to your squad.</p>
+    </section>
 
-        <!-- LEADERBOARD SCREEN -->
-        <div id="leaderboard-screen" class="screen glass-card hidden">
-            <div class="leaderboard-header">
-                <h1 class="neon-title">🏆 Top <span class="highlight">Players</span></h1>
-                <div id="live-indicator" class="live-badge hidden">🔴 LIVE</div>
-            </div>
+    <section id="leaderboard-screen" class="screen card leaderboard-card hidden">
+      <div class="leaderboard-header"><div><div class="eyebrow">LOCAL RANKINGS <span></span> 05</div><h2>Top <em>players.</em></h2></div><div id="live-indicator" class="live-badge hidden">LIVE</div></div>
+      <div id="loading-state" class="loading-text hidden">Syncing scores…</div><div id="error-state" class="error-text hidden">Could not load online scores. Showing local scores.</div>
+      <ol id="leaderboard-ul" class="leaderboard-list"></ol>
+      <button id="btn-leaderboard-again" class="secondary-button">Play another round</button>
+    </section>
 
-            <div id="loading-state" class="loading-text hidden">Fetching scores...</div>
-            <div id="error-state" class="error-text hidden">Could not load leaderboard.</div>
-            
-            <div class="leaderboard-list">
-                <ul id="leaderboard-ul">
-                    <!-- Loaded dynamically -->
-                </ul>
-            </div>
-
-            <button id="btn-play-again" class="neon-button outline">Play Again</button>
-        </div>
-
-    </div>
-
-    <!-- Supabase JS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Game Script -->
-    <script src="script.js"></script>
+    <footer class="site-footer"><span>COLOR RUSH / 2026</span><span>Built for reaction speed</span></footer>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
 </body>
 </html>

@@ -1,364 +1,213 @@
-/**
- * Color Rush Reflex - Game Logic & Supabase Integration
- */
-
-// ==========================================
-// 1. SUPABASE INITIALIZATION
-// ==========================================
 const SUPABASE_URL = 'https://yopaejjixslcjmndnvtz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Dl2a6iEvnmf2eQ_MRrPIeg_8THmHK8i';
+const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-// Create Supabase client using ONLY the publishable key
-const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-);
-
-// ==========================================
-// 2. DOM ELEMENTS
-// ==========================================
-// Screens
-const screenRules = document.getElementById('rules-screen');
-const screenStart = document.getElementById('start-screen');
-const screenGame = document.getElementById('game-screen');
-const screenLeaderboard = document.getElementById('leaderboard-screen');
-
-// Buttons
-const btnGotIt = document.getElementById('btn-got-it');
-const btnStartGame = document.getElementById('btn-start-game');
-const btnPlayAgain = document.getElementById('btn-play-again');
-
-// Inputs & Errors
-const inputPlayerName = document.getElementById('player-name');
-const nameError = document.getElementById('name-error');
-
-// Game UI
-const targetColorDisplay = document.getElementById('target-color-display');
-const timeLeftDisplay = document.getElementById('time-left');
-const scoreDisplay = document.getElementById('current-score');
-const gameBoard = document.getElementById('game-board');
-
-// Leaderboard UI
-const leaderboardUl = document.getElementById('leaderboard-ul');
-const liveIndicator = document.getElementById('live-indicator');
-const loadingState = document.getElementById('loading-state');
-const errorState = document.getElementById('error-state');
-
-// ==========================================
-// 3. GAME CONFIGURATION & STATE
-// ==========================================
-const GAME_DURATION = 30; // seconds
+const $ = (id) => document.getElementById(id);
+const screens = ['rules-screen', 'start-screen', 'game-screen', 'result-screen', 'leaderboard-screen'].map($);
+const colorPalette = [
+  { name: 'Red', hex: '#ff4d6d' }, { name: 'Blue', hex: '#35d7ff' },
+  { name: 'Purple', hex: '#b277ff' }, { name: 'Green', hex: '#63f29b' },
+  { name: 'Yellow', hex: '#ffe16a' }, { name: 'Orange', hex: '#ff9f5b' }
+];
+const GAME_DURATION = 30;
 const POINTS_CORRECT = 5;
 const POINTS_WRONG = 3;
 const TOTAL_CIRCLES = 25;
 
-const colorPalette = [
-    { name: 'Red', hex: '#ff0055', glow: '0 0 15px #ff0055' },
-    { name: 'Blue', hex: '#00f3ff', glow: '0 0 15px #00f3ff' },
-    { name: 'Purple', hex: '#aa00ff', glow: '0 0 15px #aa00ff' },
-    { name: 'Green', hex: '#39ff14', glow: '0 0 15px #39ff14' },
-    { name: 'Yellow', hex: '#ffff00', glow: '0 0 15px #ffff00' }
-];
-
 let playerName = '';
 let score = 0;
+let bestScore = Number(localStorage.getItem('colorRushBest') || 0);
 let timeLeft = GAME_DURATION;
-let timerInterval = null;
-let currentTargetColor = null;
-let isGameRunning = false;
-let isSubmitting = false; // Prevent multiple DB inserts
+let timerId = null;
+let currentTarget = null;
+let running = false;
+let paused = false;
+let streak = 0;
+let hits = 0;
+let attempts = 0;
+let rounds = 0;
+let submitted = false;
 let realtimeSubscription = null;
+let audioContext;
 
-// Audio setup (using modern Audio API)
-const soundCorrect = new Audio('Correct.mp3');
-const soundWrong = new Audio('Wrong.mp3');
-
-// Preload audio
-soundCorrect.load();
-soundWrong.load();
-
-// ==========================================
-// 4. NAVIGATION LOGIC
-// ==========================================
-function switchScreen(activeScreen) {
-    screenRules.classList.add('hidden');
-    screenStart.classList.add('hidden');
-    screenGame.classList.add('hidden');
-    screenLeaderboard.classList.add('hidden');
-    
-    activeScreen.classList.remove('hidden');
+function showScreen(screen) {
+  screens.forEach((item) => item.classList.toggle('hidden', item !== screen));
 }
 
-btnGotIt.addEventListener('click', () => {
-    switchScreen(screenStart);
-    inputPlayerName.focus();
-});
+function setText(id, value) { $(id).textContent = value; }
+function clamp(value, min, max) { return Math.min(Math.max(value, min), max); }
+function escapeHTML(value) { return String(value ?? '').replace(/[&<>'"]/g, (tag) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])); }
 
-btnPlayAgain.addEventListener('click', () => {
-    switchScreen(screenStart);
-    inputPlayerName.value = ''; // Reset input
-    inputPlayerName.focus();
-});
+function playTone(correct) {
+  try {
+    audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    oscillator.type = correct ? 'sine' : 'sawtooth';
+    oscillator.frequency.value = correct ? 620 : 160;
+    gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.12);
+    oscillator.connect(gain).connect(audioContext.destination);
+    oscillator.start(); oscillator.stop(audioContext.currentTime + 0.13);
+  } catch (_) { /* Audio is optional and can be blocked by the browser. */ }
+  if (navigator.vibrate) navigator.vibrate(correct ? 25 : [25, 25, 25]);
+}
 
-btnStartGame.addEventListener('click', () => {
-    const name = inputPlayerName.value.trim();
-    
-    if (!name || name.length > 15) {
-        nameError.classList.remove('hidden');
-        return;
-    }
-    
-    nameError.classList.add('hidden');
-    playerName = name;
-    startGame();
-});
-
-// ==========================================
-// 5. GAME ENGINE
-// ==========================================
 function startGame() {
-    // Reset State
-    score = 0;
-    timeLeft = GAME_DURATION;
-    isGameRunning = true;
-    isSubmitting = false;
-    
-    // Update UI
-    scoreDisplay.innerText = score;
-    timeLeftDisplay.innerText = `${timeLeft}s`;
-    
-    switchScreen(screenGame);
-    generateBoard();
-    
-    // Timer Logic
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        timeLeft--;
-        timeLeftDisplay.innerText = `${timeLeft}s`;
-        
-        if (timeLeft <= 0) {
-            endGame();
-        }
-    }, 1000);
+  score = 0; timeLeft = GAME_DURATION; streak = 0; hits = 0; attempts = 0; rounds = 0;
+  running = true; paused = false; submitted = false;
+  setText('current-score', '0'); setText('current-streak', '0'); setText('time-left', '30.0');
+  $('time-progress').style.width = '100%'; $('pause-overlay').classList.add('hidden');
+  showScreen($('game-screen')); nextBoard();
+  clearInterval(timerId);
+  const startedAt = performance.now();
+  timerId = setInterval(() => {
+    if (!running || paused) return;
+    timeLeft = Math.max(0, GAME_DURATION - (performance.now() - startedAt) / 1000);
+    setText('time-left', timeLeft.toFixed(1));
+    $('time-progress').style.width = `${(timeLeft / GAME_DURATION) * 100}%`;
+    $('time-progress').classList.toggle('urgent', timeLeft <= 8);
+    if (timeLeft <= 0) endGame();
+  }, 100);
 }
 
-function generateBoard() {
-    if (!isGameRunning) return;
-    
-    gameBoard.innerHTML = ''; // Clear previous board
-    let generatedColors = [];
-    
-    // Generate 25 circles with random colors
-    for (let i = 0; i < TOTAL_CIRCLES; i++) {
-        const randomColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
-        generatedColors.push(randomColor);
-        
-        const circle = document.createElement('div');
-        circle.classList.add('circle');
-        circle.style.backgroundColor = randomColor.hex;
-        circle.style.boxShadow = randomColor.glow;
-        
-        // Use pointerdown for faster response than click on mobile/desktop
-        circle.addEventListener('pointerdown', (e) => {
-            e.preventDefault(); // Prevent double triggering
-            handleCircleClick(randomColor);
-        });
-        
-        gameBoard.appendChild(circle);
-    }
-    
-    // Pick one color from the GENERATED board as the target 
-    // (guarantees at least 1 correct circle exists)
-    currentTargetColor = generatedColors[Math.floor(Math.random() * generatedColors.length)];
-    
-    // Update Target UI
-    targetColorDisplay.innerText = currentTargetColor.name;
-    targetColorDisplay.style.color = currentTargetColor.hex;
-    targetColorDisplay.style.textShadow = currentTargetColor.glow;
+function nextBoard() {
+  if (!running) return;
+  rounds += 1;
+  const difficulty = Math.min(0.15, rounds * 0.004);
+  $('round-counter').textContent = `ROUND ${String(rounds).padStart(2, '0')}`;
+  const colors = Array.from({ length: TOTAL_CIRCLES }, () => colorPalette[Math.floor(Math.random() * colorPalette.length)]);
+  currentTarget = colors[Math.floor(Math.random() * colors.length)];
+  const target = $('target-color-display');
+  target.textContent = currentTarget.name.toUpperCase(); target.style.color = currentTarget.hex; target.style.textShadow = `0 0 26px ${currentTarget.hex}66`;
+  const fragment = document.createDocumentFragment();
+  colors.forEach((color, index) => {
+    const orb = document.createElement('button');
+    orb.type = 'button'; orb.className = 'color-orb'; orb.setAttribute('aria-label', `${color.name} orb`);
+    orb.style.setProperty('--orb-color', color.hex); orb.style.setProperty('--delay', `${(index % 5) * 18}ms`);
+    orb.addEventListener('pointerdown', (event) => { event.preventDefault(); handleOrb(color, orb); }, { once: true });
+    fragment.appendChild(orb);
+  });
+  $('game-board').replaceChildren(fragment);
+  $('game-board').style.setProperty('--board-scale', (1 + difficulty).toFixed(3));
 }
 
-function handleCircleClick(clickedColor) {
-    if (!isGameRunning) return;
-    
-    let isCorrect = (clickedColor.name === currentTargetColor.name);
-    
-    // Score update
-    if (isCorrect) {
-        score += POINTS_CORRECT;
-        playSound(true);
-    } else {
-        score -= POINTS_WRONG;
-        playSound(false);
-    }
-    
-    // Prevent score from going NaN somehow
-    if (isNaN(score) || !isFinite(score)) score = 0;
-    
-    scoreDisplay.innerText = score;
-    
-    // Generate next round immediately
-    generateBoard();
+function handleOrb(color, orb) {
+  if (!running || paused) return;
+  attempts += 1;
+  const correct = color.name === currentTarget.name;
+  orb.classList.add(correct ? 'hit' : 'miss');
+  if (correct) { score += POINTS_CORRECT; streak += 1; hits += 1; setText('feedback-text', streak >= 3 ? `Streak x${streak} — keep going!` : 'Nice hit. Find the next one.'); }
+  else { score -= POINTS_WRONG; streak = 0; setText('feedback-text', 'Missed. Reset your focus.'); }
+  score = Math.max(-999, score);
+  setText('current-score', score); setText('current-streak', streak); $('streak-label').textContent = streak >= 3 ? 'on fire' : 'build it';
+  const delta = $('score-delta'); delta.textContent = correct ? `+${POINTS_CORRECT}` : `−${POINTS_WRONG}`; delta.className = `score-delta ${correct ? 'positive' : 'negative'}`;
+  playTone(correct);
+  window.setTimeout(() => { if (running) nextBoard(); }, 80);
 }
 
-function playSound(isCorrect) {
-    const sound = isCorrect ? soundCorrect : soundWrong;
-    
-    // Reset and play
-    sound.currentTime = 0;
-    sound.play().catch(e => {
-        // Silently ignore audio block errors to prevent game crash
-        console.warn('Audio play prevented by browser:', e);
-    });
-    
-    // Vibration logic
-    if (navigator.vibrate) {
-        if (isCorrect) {
-            navigator.vibrate(40);
-        } else {
-            navigator.vibrate([40, 40, 40]); // Error feel
-        }
-    }
+function togglePause(force) {
+  if (!running) return;
+  paused = typeof force === 'boolean' ? force : !paused;
+  $('pause-overlay').classList.toggle('hidden', !paused); $('btn-pause').textContent = paused ? '▶' : 'Ⅱ';
 }
 
 async function endGame() {
-    isGameRunning = false;
-    clearInterval(timerInterval);
-    
-    // Prevent duplicate submissions
-    if (isSubmitting) return;
-    isSubmitting = true;
-    
-    // Navigate to leaderboard early to show loading state
-    switchScreen(screenLeaderboard);
-    loadingState.classList.remove('hidden');
-    leaderboardUl.innerHTML = '';
-    errorState.classList.add('hidden');
-    
-    // Sanitize input before DB insertion
-    const finalScore = parseInt(score, 10);
-    const safeScore = (isNaN(finalScore) || !isFinite(finalScore)) ? 0 : finalScore;
-    const safeName = playerName.trim() || 'Anonymous';
-    
-    try {
-        // 1. Submit score to Supabase
-        const { error: insertError } = await supabase
-            .from('scores')
-            .insert([{
-                player_name: safeName.substring(0, 15),
-                score: safeScore
-            }]);
-            
-        if (insertError) throw insertError;
-        
-        // 2. Setup Realtime (if not already setup)
-        setupRealtimeLeaderboard();
-        
-        // 3. Fetch Leaderboard manually this first time
-        await fetchLeaderboard();
-        
-    } catch (err) {
-        console.error("Error finalizing game:", err);
-        loadingState.classList.add('hidden');
-        errorState.classList.remove('hidden');
-    }
+  if (!running || submitted) return;
+  running = false; paused = false; submitted = true; clearInterval(timerId);
+  bestScore = Math.max(bestScore, score); localStorage.setItem('colorRushBest', String(bestScore));
+  setText('final-score', score); setText('result-hits', hits); setText('result-best', bestScore);
+  setText('result-accuracy', attempts ? `${Math.round((hits / attempts) * 100)}%` : '0%');
+  $('result-badge').textContent = score >= bestScore && score > 0 ? 'NEW PERSONAL BEST' : 'ROUND COMPLETE';
+  showScreen($('result-screen'));
+  updateTelegramStatus('pending');
+  const payload = { playerName: playerName.slice(0, 15), score: Number(score) || 0, hits, attempts, accuracy: attempts ? Math.round((hits / attempts) * 100) : 0, playedAt: new Date().toISOString() };
+  saveLocalScore(payload);
+  await Promise.allSettled([sendScoreToTelegram(payload), syncScore(payload)]);
 }
 
-// ==========================================
-// 6. LEADERBOARD & REALTIME LOGIC
-// ==========================================
-
-async function fetchLeaderboard() {
-    try {
-        loadingState.classList.remove('hidden');
-        
-        const { data, error } = await supabase
-            .from('scores')
-            .select('player_name, score')
-            .order('score', { ascending: false })
-            .limit(10);
-            
-        if (error) throw error;
-        
-        renderLeaderboard(data);
-    } catch (err) {
-        console.error("Error fetching leaderboard:", err);
-        errorState.classList.remove('hidden');
-    } finally {
-        loadingState.classList.add('hidden');
-    }
+function saveLocalScore(entry) {
+  const scores = JSON.parse(localStorage.getItem('colorRushScores') || '[]');
+  scores.push(entry); scores.sort((a, b) => b.score - a.score);
+  localStorage.setItem('colorRushScores', JSON.stringify(scores.slice(0, 20)));
 }
 
-function renderLeaderboard(data) {
-    leaderboardUl.innerHTML = '';
-    
-    if (!data || data.length === 0) {
-        leaderboardUl.innerHTML = '<li style="justify-content:center;">No scores yet!</li>';
-        return;
-    }
-    
-    data.forEach((entry, index) => {
-        const li = document.createElement('li');
-        
-        // Rank logic
-        let rankStr = `#${index + 1}`;
-        if (index === 0) rankStr = '🥇';
-        else if (index === 1) rankStr = '🥈';
-        else if (index === 2) rankStr = '🥉';
-        
-        // Escape HTML to prevent XSS from names
-        const safeName = escapeHTML(entry.player_name);
-        
-        li.innerHTML = `
-            <div>
-                <span class="rank-icon">${rankStr}</span>
-                <strong>${safeName}</strong>
-            </div>
-            <span>${entry.score} pts</span>
-        `;
-        
-        // Highlight current player's latest score
-        if (entry.player_name === playerName && entry.score === score && isSubmitting) {
-            li.style.color = 'var(--neon-yellow)';
-            li.style.textShadow = '0 0 10px rgba(255, 255, 0, 0.5)';
-        }
-        
-        leaderboardUl.appendChild(li);
-    });
+async function sendScoreToTelegram(payload) {
+  try {
+    const response = await fetch('/api/submit-score', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (!response.ok) throw new Error('Telegram endpoint unavailable');
+    updateTelegramStatus('sent');
+  } catch (_) {
+    updateTelegramStatus('offline');
+  }
 }
 
-function setupRealtimeLeaderboard() {
-    // Only subscribe once
-    if (realtimeSubscription) return;
-    
-    realtimeSubscription = supabase
-        .channel('public:scores')
-        .on(
-            'postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'scores' },
-            (payload) => {
-                // Whenever a new score is inserted anywhere, refresh our board
-                fetchLeaderboard();
-            }
-        )
-        .subscribe((status) => {
-            if (status === 'SUBSCRIBED') {
-                liveIndicator.classList.remove('hidden');
-            } else {
-                liveIndicator.classList.add('hidden');
-            }
-        });
+function updateTelegramStatus(state) {
+  const text = $('telegram-status-text'); const box = $('telegram-status');
+  box.className = `telegram-status ${state}`;
+  text.textContent = state === 'sent' ? 'Score sent to Telegram' : state === 'offline' ? 'Telegram is not connected yet' : 'Sending score to Telegram…';
 }
 
-// Utility to prevent XSS
-function escapeHTML(str) {
-    if (!str) return '';
-    return str.replace(/[&<>'"]/g, 
-        tag => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            "'": '&#39;',
-            '"': '&quot;'
-        }[tag] || tag)
-    );
+async function syncScore(payload) {
+  if (!supabaseClient) return;
+  try {
+    const { error } = await supabaseClient.from('scores').insert([{ player_name: payload.playerName, score: payload.score }]);
+    if (error) throw error;
+    setupRealtime();
+  } catch (_) { /* The local leaderboard remains usable without Supabase. */ }
 }
+
+async function loadLeaderboard() {
+  $('loading-state').classList.remove('hidden'); $('error-state').classList.add('hidden');
+  let scores = [];
+  try {
+    if (!supabaseClient) throw new Error('No database');
+    const { data, error } = await supabaseClient.from('scores').select('player_name, score').order('score', { ascending: false }).limit(10);
+    if (error) throw error;
+    scores = (data || []).map((item) => ({ playerName: item.player_name, score: item.score }));
+  } catch (_) {
+    scores = JSON.parse(localStorage.getItem('colorRushScores') || '[]').slice(0, 10);
+    $('error-state').classList.remove('hidden');
+  }
+  $('loading-state').classList.add('hidden'); renderLeaderboard(scores);
+}
+
+function renderLeaderboard(scores) {
+  const list = $('leaderboard-ul'); list.replaceChildren();
+  if (!scores.length) { list.innerHTML = '<li class="empty-row">No runs yet. Be the first.</li>'; return; }
+  scores.slice(0, 10).forEach((entry, index) => {
+    const li = document.createElement('li'); li.innerHTML = `<span class="rank"><b>${String(index + 1).padStart(2, '0')}</b><strong>${escapeHTML(entry.playerName || entry.player_name || 'Anonymous')}</strong></span><span class="leader-score">${Number(entry.score) || 0}<small> pts</small></span>`;
+    list.appendChild(li);
+  });
+}
+
+function setupRealtime() {
+  if (!supabaseClient || realtimeSubscription) return;
+  realtimeSubscription = supabaseClient.channel('scores-live').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scores' }, loadLeaderboard).subscribe((status) => $('live-indicator').classList.toggle('hidden', status !== 'SUBSCRIBED'));
+}
+
+$('btn-got-it').addEventListener('click', () => { showScreen($('start-screen')); $('player-name').focus(); });
+$('btn-back-rules').addEventListener('click', () => showScreen($('rules-screen')));
+$('btn-start-game').addEventListener('click', () => {
+  const value = $('player-name').value.trim();
+  if (value.length < 2 || value.length > 15) { $('name-error').classList.remove('hidden'); return; }
+  $('name-error').classList.add('hidden'); playerName = value; startGame();
+});
+$('player-name').addEventListener('keydown', (event) => { if (event.key === 'Enter') $('btn-start-game').click(); });
+$('btn-pause').addEventListener('click', () => togglePause()); $('btn-resume').addEventListener('click', () => togglePause(false));
+$('btn-quit').addEventListener('click', () => endGame());
+$('btn-play-again').addEventListener('click', () => { $('player-name').value = playerName; showScreen($('start-screen')); $('player-name').focus(); });
+$('btn-view-leaderboard').addEventListener('click', () => { showScreen($('leaderboard-screen')); loadLeaderboard(); });
+$('btn-leaderboard-again').addEventListener('click', () => { $('player-name').value = playerName; showScreen($('start-screen')); });
+$('btn-share').addEventListener('click', async () => {
+  const message = `I scored ${score} points in Color Rush! Can you beat me?`;
+  try { await navigator.clipboard.writeText(message); $('share-feedback').textContent = 'Result copied. Send it to your squad.'; }
+  catch (_) { $('share-feedback').textContent = message; }
+  $('share-feedback').classList.remove('hidden');
+});
+
+// Keyboard accessibility: press P or Escape to pause during a run.
+document.addEventListener('keydown', (event) => { if (event.key.toLowerCase() === 'p' || event.key === 'Escape') togglePause(); });
+
+showScreen($('rules-screen'));
