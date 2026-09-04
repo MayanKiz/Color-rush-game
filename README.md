@@ -2,37 +2,39 @@
 
 Color Rush is a fast neon reflex game. The player has 30 seconds to select matching orbs. Correct hits award **+5 points**, wrong hits deduct **3 points**, and consecutive hits build a streak.
 
-## What is connected now
+## Startup flow
 
-The game uses a server-side API layer for scores. The browser posts each completed result to `/api/submit-score`. That function validates the payload, saves it to the hosted Postgres database, and sends the same result to Telegram. The browser never receives the database connection string or Telegram bot token.
+The game now opens with a fullscreen landing card. Selecting **Open full screen** activates browser fullscreen and then reveals the rules screen. After the player reads the rules, the player setup screen appears. The timer begins only after a valid name is entered and **Start challenge** is pressed. A **Continue in window** fallback is available when the browser blocks fullscreen.
 
-The leaderboard is fetched from `/api/leaderboard` and is visible in two places: a **Live Top 5** preview directly on the result screen and the full **Top Players** screen. If the database is unavailable, the game automatically shows the local browser leaderboard instead.
+## Telegram delivery
 
-## Connect a database through Vercel
+A completed score is posted to `/api/submit-score`. The serverless function stores the result in Neon Postgres when configured and independently sends the score to Telegram when Telegram is configured. A database failure no longer prevents Telegram delivery.
 
-Vercel's old built-in Vercel Postgres product is no longer offered for new projects; the current route is a Postgres provider from the Vercel Marketplace, such as Neon. See [Vercel's Postgres documentation](https://vercel.com/docs/postgres) and the [Neon Vercel Marketplace integration](https://vercel.com/marketplace/neon).
-
-In Vercel, open the project connected to this repository, choose **Integrations / Marketplace**, install **Neon**, and choose **Create New Neon Account** if you do not already have Neon. The integration injects a database connection variable into the project. This code accepts `DATABASE_URL`, `POSTGRES_URL`, or `NEON_DATABASE_URL`; `DATABASE_URL` is the recommended name for a manual setup.
-
-After the database is created, open the Neon SQL editor and run the contents of [`database/schema.sql`](database/schema.sql). This creates the `scores` table used by both API functions. Then redeploy the project. Vercel environment-variable changes only apply to new deployments, so a redeploy is required after adding or changing them. [1]
-
-## Connect Telegram score delivery
-
-Create a bot with [BotFather](https://t.me/BotFather), add it to the destination chat, group, or channel, and give it permission to send messages. Add these variables in Vercel Project Settings → Environment Variables:
+Configure these Vercel environment variables in **Project Settings → Environment Variables** for both the Production and Preview environments:
 
 ```text
 TELEGRAM_BOT_TOKEN=your_real_bot_token
 TELEGRAM_CHAT_ID=your_chat_or_channel_id
 ```
 
-Select **Production** and **Preview** if you want the integration in both environments. Keep the real token out of GitHub and frontend code. If Telegram is not configured, the leaderboard still works and the result screen will say that Telegram is not connected yet.
+The Bot API requires the destination `chat_id` and message text for `sendMessage`. [1] The bot must be able to access the destination: start a private chat with it, add it to a group, or add it to a channel with permission to post.
 
-## Deploy and verify
+After deploying, open this diagnostic URL in the same Vercel project:
 
-Push the repository to the Vercel project or trigger a redeploy from the dashboard. Open the deployed URL, play one round, and check that the result screen shows the score in **Live Top 5**. Open **View all** to see the hosted leaderboard. The serverless endpoint can also be checked by completing a round; a successful hosted save is reflected on the next leaderboard load.
+```text
+https://YOUR-DOMAIN.vercel.app/api/telegram-health
+```
 
-The game now includes a Back control from setup to rules, from the game to setup, from results to setup, and from the full leaderboard back to results. Screen entrances, card glow, orb hits, score deltas, timer urgency, and pause overlays have smooth motion while reduced-motion preferences are respected.
+A successful response returns `ok: true`, the bot username, and the destination chat type. If the response reports a missing variable, invalid token, or inaccessible chat, fix that exact Vercel setting or Telegram permission and redeploy. Do not put the real token in GitHub or frontend JavaScript.
+
+## Hosted leaderboard
+
+The browser reads `/api/leaderboard`, while `/api/submit-score` writes the result. Run [`database/schema.sql`](database/schema.sql) once in the Neon SQL editor. The project accepts `DATABASE_URL`, `POSTGRES_URL`, or `NEON_DATABASE_URL`. If hosted services are unavailable, the game falls back to local browser scores.
+
+## Verification
+
+The final browser flow was verified as fullscreen landing → rules → setup → Start challenge → timer/game. The target color label and matching swatch are shown above the board, and `rao.mynkk` remains in the footer Instagram mark.
 
 ## Sources
 
-[1]: https://vercel.com/docs/environment-variables "Vercel Environment Variables"
+[1]: https://core.telegram.org/bots/api#sendmessage "Telegram Bot API — sendMessage"

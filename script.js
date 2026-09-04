@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const screens = ['rules-screen', 'start-screen', 'game-screen', 'result-screen', 'leaderboard-screen'].map($);
+const screens = ['fullscreen-screen', 'rules-screen', 'start-screen', 'game-screen', 'result-screen', 'leaderboard-screen'].map($);
 const colorPalette = [
   { name: 'Red', hex: '#ff4d6d' }, { name: 'Blue', hex: '#35d7ff' },
   { name: 'Purple', hex: '#b277ff' }, { name: 'Green', hex: '#63f29b' },
@@ -49,10 +49,8 @@ async function requestGameFullscreen() {
     if (!document.fullscreenElement && !document.documentElement.requestFullscreen) return false;
     if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
     document.body.classList.add('is-fullscreen');
-    $('fullscreen-hint').classList.add('is-ready');
     return true;
   } catch (_) {
-    $('fullscreen-hint').classList.remove('is-ready');
     return false;
   }
 }
@@ -60,8 +58,8 @@ async function requestGameFullscreen() {
 function syncFullscreenHint() {
   const active = Boolean(document.fullscreenElement);
   document.body.classList.toggle('is-fullscreen', active);
-  $('fullscreen-hint').classList.toggle('is-ready', active);
-  $('btn-start-game').innerHTML = active ? 'Start challenge <span>→</span>' : 'Open full screen <span>↗</span>';
+  if ($('fullscreen-screen-note')) $('fullscreen-screen-note').textContent = active ? 'Fullscreen ready. Next, read the rules before you start.' : 'You can exit fullscreen anytime with your browser controls.';
+  if ($('btn-enter-fullscreen')) $('btn-enter-fullscreen').innerHTML = active ? 'Fullscreen ready <span>✓</span>' : 'Open full screen <span>↗</span>';
 }
 
 function validatePlayer() {
@@ -182,10 +180,11 @@ function renderLeaderboard(scores, list, mini = false) {
 }
 
 function leaveGame() { running = false; paused = false; clearInterval(timerId); showScreen($('start-screen')); }
+$('btn-enter-fullscreen').addEventListener('click', async () => { const entered = await requestGameFullscreen(); if (!entered) $('fullscreen-screen-note').textContent = 'Fullscreen is unavailable here. You can still continue in the window.'; showScreen($('rules-screen')); });
+$('btn-skip-fullscreen').addEventListener('click', () => showScreen($('rules-screen')));
 $('btn-got-it').addEventListener('click', () => { showScreen($('start-screen')); $('player-name').focus(); });
 $('btn-back-rules').addEventListener('click', () => showScreen($('rules-screen')));
-$('btn-start-game').addEventListener('click', async () => { if (!validatePlayer()) return; await requestGameFullscreen(); startGame(); });
-$('btn-window-start').addEventListener('click', () => { if (!validatePlayer()) return; startGame(); });
+$('btn-start-game').addEventListener('click', () => { if (!validatePlayer()) return; startGame(); });
 document.addEventListener('fullscreenchange', syncFullscreenHint);
 $('player-name').addEventListener('keydown', (event) => { if (event.key === 'Enter') $('btn-start-game').click(); });
 
@@ -198,4 +197,4 @@ $('btn-leaderboard-again').addEventListener('click', () => { $('player-name').va
 $('btn-leaderboard-back').addEventListener('click', () => showScreen($('result-screen')));
 $('btn-share').addEventListener('click', async () => { const message = `I scored ${score} points in Color Rush! Can you beat me?`; try { await navigator.clipboard.writeText(message); $('share-feedback').textContent = 'Result copied. Send it to your squad.'; } catch (_) { $('share-feedback').textContent = message; } $('share-feedback').classList.remove('hidden'); });
 document.addEventListener('keydown', (event) => { if (event.key.toLowerCase() === 'p' || event.key === 'Escape') togglePause(); });
-showScreen($('rules-screen'));
+showScreen($('fullscreen-screen'));
