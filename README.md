@@ -1,51 +1,38 @@
 # Color Rush — Reflex Arena
 
-Color Rush is a fast neon reflex game. The player has 30 seconds to select as many orbs as possible that match the target color. Correct hits award **+5 points**, wrong hits deduct **3 points**, and consecutive hits build a streak.
+Color Rush is a fast neon reflex game. The player has 30 seconds to select matching orbs. Correct hits award **+5 points**, wrong hits deduct **3 points**, and consecutive hits build a streak.
 
-## Included in this version
+## What is connected now
 
-The game now has a complete start-to-finish flow: rules screen, player setup, responsive play arena, live countdown with progress bar, streak tracking, pause and resume, keyboard accessibility, touch-friendly controls, score feedback, personal-best tracking, result statistics, local leaderboard fallback, online Supabase leaderboard support, and a share-result action.
+The game uses a server-side API layer for scores. The browser posts each completed result to `/api/submit-score`. That function validates the payload, saves it to the hosted Postgres database, and sends the same result to Telegram. The browser never receives the database connection string or Telegram bot token.
 
-The game also includes a secure Telegram integration. The browser sends a completed score to `/api/submit-score`; the serverless function sends the message to Telegram using environment variables, so the bot token is never exposed in frontend JavaScript.
+The leaderboard is fetched from `/api/leaderboard` and is visible in two places: a **Live Top 5** preview directly on the result screen and the full **Top Players** screen. If the database is unavailable, the game automatically shows the local browser leaderboard instead.
 
-## Telegram setup
+## Connect a database through Vercel
 
-Create a bot with [BotFather](https://t.me/BotFather), add the bot to the destination chat or channel, and grant it permission to send messages. Configure these variables in the deployment dashboard:
+Vercel's old built-in Vercel Postgres product is no longer offered for new projects; the current route is a Postgres provider from the Vercel Marketplace, such as Neon. See [Vercel's Postgres documentation](https://vercel.com/docs/postgres) and the [Neon Vercel Marketplace integration](https://vercel.com/marketplace/neon).
+
+In Vercel, open the project connected to this repository, choose **Integrations / Marketplace**, install **Neon**, and choose **Create New Neon Account** if you do not already have Neon. The integration injects a database connection variable into the project. This code accepts `DATABASE_URL`, `POSTGRES_URL`, or `NEON_DATABASE_URL`; `DATABASE_URL` is the recommended name for a manual setup.
+
+After the database is created, open the Neon SQL editor and run the contents of [`database/schema.sql`](database/schema.sql). This creates the `scores` table used by both API functions. Then redeploy the project. Vercel environment-variable changes only apply to new deployments, so a redeploy is required after adding or changing them. [1]
+
+## Connect Telegram score delivery
+
+Create a bot with [BotFather](https://t.me/BotFather), add it to the destination chat, group, or channel, and give it permission to send messages. Add these variables in Vercel Project Settings → Environment Variables:
 
 ```text
 TELEGRAM_BOT_TOKEN=your_real_bot_token
 TELEGRAM_CHAT_ID=your_chat_or_channel_id
 ```
 
-For a private chat, send a message to the bot first and use a Telegram API update or a chat-ID helper to find the numeric chat ID. For a group or channel, the bot must be a member with posting permission. Do not put the real token in `.env.example`, frontend code, or a public Git commit.
+Select **Production** and **Preview** if you want the integration in both environments. Keep the real token out of GitHub and frontend code. If Telegram is not configured, the leaderboard still works and the result screen will say that Telegram is not connected yet.
 
-If these variables are not configured, gameplay still works normally and the result screen clearly shows that Telegram is not connected yet. Scores are saved in the browser's local storage and continue to appear in the local leaderboard.
+## Deploy and verify
 
-## Run locally
+Push the repository to the Vercel project or trigger a redeploy from the dashboard. Open the deployed URL, play one round, and check that the result screen shows the score in **Live Top 5**. Open **View all** to see the hosted leaderboard. The serverless endpoint can also be checked by completing a round; a successful hosted save is reflected on the next leaderboard load.
 
-This repository is a static Vercel-style project with one serverless API function. From the project root, run a local server that supports the `/api` function, for example:
+The game now includes a Back control from setup to rules, from the game to setup, from results to setup, and from the full leaderboard back to results. Screen entrances, card glow, orb hits, score deltas, timer urgency, and pause overlays have smooth motion while reduced-motion preferences are respected.
 
-```bash
-npx vercel dev
-```
+## Sources
 
-Then open the local URL shown by Vercel. A plain static server can preview the game UI, but it cannot execute the Telegram endpoint.
-
-## Supabase leaderboard
-
-The existing publishable Supabase configuration is retained for the shared leaderboard. The `scores` table should contain at least:
-
-```sql
-create table scores (
-  id bigint generated by default as identity primary key,
-  player_name text not null,
-  score integer not null,
-  created_at timestamptz default now()
-);
-```
-
-Enable the required read and insert policies for the public game if online leaderboard syncing is desired. The game always falls back to local storage if Supabase is unavailable.
-
-## Deploy
-
-Deploy the repository to Vercel, add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` under Project Settings → Environment Variables, and redeploy. The existing `CNAME` file is preserved for the custom domain configuration.
+[1]: https://vercel.com/docs/environment-variables "Vercel Environment Variables"

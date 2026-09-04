@@ -44,11 +44,11 @@
         <div><span class="field-label">Scoring</span><strong>+5 / −3</strong></div>
       </div>
       <button id="btn-start-game" class="primary-button">Start challenge <span>→</span></button>
-      <button id="btn-back-rules" class="text-button">← Read the rules again</button>
+      <button id="btn-back-rules" class="text-button">← Back to rules</button>
     </section>
 
     <section id="game-screen" class="screen game-layout hidden">
-      <div class="game-topline"><div><span class="eyebrow">LIVE ROUND <span></span> 03</span><h2>Lock on: <strong id="target-color-display">RED</strong></h2></div><button id="btn-pause" class="icon-button" aria-label="Pause game">Ⅱ</button></div>
+      <div class="game-topline"><button id="btn-game-back" class="back-button">← Back</button><div><span class="eyebrow">LIVE ROUND <span></span> 03</span><h2>Lock on: <strong id="target-color-display">RED</strong></h2></div><button id="btn-pause" class="icon-button" aria-label="Pause game">Ⅱ</button></div>
       <div class="hud-grid">
         <div class="hud-card timer-card"><span class="hud-label">TIME LEFT</span><strong id="time-left">30.0</strong><div class="progress-track"><span id="time-progress"></span></div></div>
         <div class="hud-card"><span class="hud-label">SCORE</span><strong id="current-score">0</strong><span id="score-delta" class="score-delta"></span></div>
@@ -65,7 +65,7 @@
       <div class="final-score"><span>FINAL SCORE</span><strong id="final-score">0</strong><small>points</small></div>
       <div class="result-stats"><div><strong id="result-hits">0</strong><span>hits</span></div><div><strong id="result-accuracy">0%</strong><span>accuracy</span></div><div><strong id="result-best">0</strong><span>best score</span></div></div>
       <div id="telegram-status" class="telegram-status"><span class="status-dot"></span><span id="telegram-status-text">Sending score to Telegram…</span></div>
-      <div class="result-actions"><button id="btn-play-again" class="primary-button">Play again <span>↗</span></button><button id="btn-share" class="secondary-button">Share result</button></div><button id="btn-view-leaderboard" class="text-button">View leaderboard →</button>
+      <div class="result-rankings"><div class="mini-heading"><span>LIVE TOP 5</span><button id="btn-view-leaderboard" class="inline-button">View all →</button></div><ol id="result-leaderboard-list" class="mini-list"></ol></div><div class="result-actions"><button id="btn-play-again" class="primary-button">Play again <span>↗</span></button><button id="btn-share" class="secondary-button">Share result</button></div><button id="btn-result-back" class="text-button">← Back to setup</button>
       <p id="share-feedback" class="microcopy hidden">Result copied. Send it to your squad.</p>
     </section>
 
@@ -73,12 +73,11 @@
       <div class="leaderboard-header"><div><div class="eyebrow">LOCAL RANKINGS <span></span> 05</div><h2>Top <em>players.</em></h2></div><div id="live-indicator" class="live-badge hidden">LIVE</div></div>
       <div id="loading-state" class="loading-text hidden">Syncing scores…</div><div id="error-state" class="error-text hidden">Could not load online scores. Showing local scores.</div>
       <ol id="leaderboard-ul" class="leaderboard-list"></ol>
-      <button id="btn-leaderboard-again" class="secondary-button">Play another round</button>
+      <button id="btn-leaderboard-again" class="secondary-button">Play another round</button><button id="btn-leaderboard-back" class="text-button">← Back to results</button>
     </section>
 
     <footer class="site-footer"><span>COLOR RUSH / 2026</span><span>Built for reaction speed</span></footer>
   </main>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 </body>
 </html>

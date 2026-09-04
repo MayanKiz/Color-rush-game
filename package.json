@@ -1,0 +1,10 @@
+{
+  "name": "color-rush-game",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Color Rush reflex game with a Vercel-hosted Neon leaderboard",
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0"
+  }
+}

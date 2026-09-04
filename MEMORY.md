@@ -1,5 +1,7 @@
 # Memory
 
-The original repository was a static HTML/CSS/JavaScript game with Supabase calls already present. Its audio files live under `Public/`, but the new implementation uses the Web Audio API instead, avoiding broken relative audio paths and autoplay failures.
+The original repository used direct Supabase browser calls. The current implementation intentionally routes leaderboard reads and score writes through Vercel serverless functions backed by Neon Postgres. This matches the current Vercel Marketplace database path and keeps the connection string server-side. The browser still keeps a local-storage fallback for previews and for deployments that have not yet configured the database.
 
-The repository has no package manifest, so validation is performed with syntax checks and a local HTTP preview. Telegram delivery requires Vercel-style serverless execution and two deployment environment variables; a plain static file server cannot execute the endpoint. The local leaderboard is deliberately retained as a reliable fallback.
+`database/schema.sql` must be run once in the Neon SQL editor. The server functions accept `DATABASE_URL`, `POSTGRES_URL`, or `NEON_DATABASE_URL`. Telegram remains optional and is handled by the same score-submission function.
+
+The browser flow was verified through setup, game, result, Live Top 5 preview, full leaderboard, and Back navigation. Static local preview cannot execute the serverless functions, so it correctly displays local scores and the unconfigured-service notice until the project runs through Vercel.
