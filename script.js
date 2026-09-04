@@ -23,6 +23,8 @@ let hits = 0;
 let attempts = 0;
 let rounds = 0;
 let submitted = false;
+let countdownTimerId = null;
+let countdownActive = false;
 let audioContext;
 let lastScores = [];
 
@@ -66,6 +68,28 @@ function validatePlayer() {
   const value = $('player-name').value.trim();
   if (value.length < 2 || value.length > 15) { $('name-error').classList.remove('hidden'); return false; }
   $('name-error').classList.add('hidden'); playerName = value; return true;
+}
+
+function startCountdown() {
+  clearTimeout(countdownTimerId);
+  countdownActive = true;
+  showScreen($('game-screen'));
+  const overlay = $('countdown-overlay'); const value = $('countdown-value');
+  const steps = ['3', '2', '1', 'GO']; let step = 0;
+  overlay.classList.remove('hidden');
+  const tick = () => {
+    if (!countdownActive) return;
+    value.textContent = steps[step]; value.classList.remove('countdown-pop'); void value.offsetWidth; value.classList.add('countdown-pop');
+    step += 1;
+    if (step >= steps.length) {
+      countdownTimerId = window.setTimeout(() => { countdownActive = false; overlay.classList.add('hidden'); startGame(); }, 520);
+    } else countdownTimerId = window.setTimeout(tick, 720);
+  };
+  tick();
+}
+
+function cancelCountdown() {
+  countdownActive = false; clearTimeout(countdownTimerId); countdownTimerId = null; $('countdown-overlay').classList.add('hidden');
 }
 
 function startGame() {
@@ -179,12 +203,12 @@ function renderLeaderboard(scores, list, mini = false) {
   });
 }
 
-function leaveGame() { running = false; paused = false; clearInterval(timerId); showScreen($('start-screen')); }
+function leaveGame() { cancelCountdown(); running = false; paused = false; clearInterval(timerId); showScreen($('start-screen')); }
 $('btn-enter-fullscreen').addEventListener('click', async () => { const entered = await requestGameFullscreen(); if (!entered) $('fullscreen-screen-note').textContent = 'Fullscreen is unavailable here. You can still continue in the window.'; showScreen($('rules-screen')); });
 $('btn-skip-fullscreen').addEventListener('click', () => showScreen($('rules-screen')));
 $('btn-got-it').addEventListener('click', () => { showScreen($('start-screen')); $('player-name').focus(); });
 $('btn-back-rules').addEventListener('click', () => showScreen($('rules-screen')));
-$('btn-start-game').addEventListener('click', () => { if (!validatePlayer()) return; startGame(); });
+$('btn-start-game').addEventListener('click', () => { if (!validatePlayer()) return; startCountdown(); });
 document.addEventListener('fullscreenchange', syncFullscreenHint);
 $('player-name').addEventListener('keydown', (event) => { if (event.key === 'Enter') $('btn-start-game').click(); });
 

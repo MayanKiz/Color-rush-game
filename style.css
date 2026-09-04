@@ -122,3 +122,12 @@ body.is-fullscreen .game-layout { width: min(100%, 920px); }
 .fullscreen-symbol span:nth-child(2)::before { left: 14px; bottom: 14px; border-bottom: 2px solid; border-left: 2px solid; }
 .fullscreen-symbol span:nth-child(3), .fullscreen-symbol span:nth-child(4) { display: none; }
 .fullscreen-card h1 { margin-top: 18px; }
+
+/* Cinematic round countdown */
+.countdown-overlay { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; color: #f7f4ec; isolation: isolate; }
+.countdown-overlay::before { content: ''; position: absolute; width: min(46vw, 420px); height: min(46vw, 420px); border: 1px solid rgba(230,201,130,.2); border-radius: 50%; box-shadow: 0 0 100px rgba(230,201,130,.07), inset 0 0 60px rgba(166,149,237,.04); }
+.countdown-kicker, .countdown-line { position: relative; z-index: 1; color: rgba(230,201,130,.68); font: 700 10px 'Space Grotesk', sans-serif; letter-spacing: .3em; text-transform: uppercase; }
+.countdown-value { position: relative; z-index: 1; display: block; margin: 10px 0 14px; color: #f7f4ec; font: 600 clamp(110px, 24vw, 240px)/.8 'Space Grotesk', sans-serif; letter-spacing: -.08em; text-shadow: 0 0 45px rgba(230,201,130,.25); }
+.countdown-line { color: rgba(247,244,236,.42); letter-spacing: .45em; }
+.countdown-pop { animation: countdown-pop .62s cubic-bezier(.18,.8,.22,1) both; }
+@keyframes countdown-pop { 0% { opacity: 0; transform: scale(.6); filter: blur(10px); } 45% { opacity: 1; transform: scale(1.08); filter: blur(0); } 100% { opacity: .92; transform: scale(1); } }
