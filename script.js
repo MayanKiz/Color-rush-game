@@ -27,6 +27,23 @@ let countdownTimerId = null;
 let countdownActive = false;
 let audioContext;
 let lastScores = [];
+let leaderboardCache = [];
+let leaderboardCacheAt = 0;
+let leaderboardReturnScreen = $('result-screen');
+let selectedProfile = null;
+const LEADERBOARD_CACHE_KEY = 'colorRushLeaderboardCache';
+const LEADERBOARD_CACHE_AT_KEY = 'colorRushLeaderboardCacheAt';
+const DEVICE_ID_KEY = 'colorRushDeviceId';
+
+function getDeviceId() {
+  let id = localStorage.getItem(DEVICE_ID_KEY);
+  if (!id) {
+    id = window.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+    localStorage.setItem(DEVICE_ID_KEY, id);
+  }
+  return id;
+}
+const deviceId = getDeviceId();
 
 function showScreen(screen) {
   screens.forEach((item) => item.classList.toggle('hidden', item !== screen));
@@ -43,7 +60,7 @@ function playTone(correct) {
     gain.gain.setValueAtTime(0.0001, audioContext.currentTime); gain.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.01); gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.12);
     oscillator.connect(gain).connect(audioContext.destination); oscillator.start(); oscillator.stop(audioContext.currentTime + 0.13);
   } catch (_) { /* Audio is optional and can be blocked by the browser. */ }
-  if (navigator.vibrate) navigator.vibrate(correct ? 25 : [25, 25, 25]);
+  if (!correct && navigator.vibrate) navigator.vibrate([35, 35, 70]);
 }
 
 async function requestGameFullscreen() {
@@ -154,10 +171,11 @@ function togglePause(force) {
 }
 
 function makePayload() {
-  return { playerName: playerName.slice(0, 15), score: Number(score) || 0, hits, attempts, accuracy: attempts ? Math.round((hits / attempts) * 100) : 0, playedAt: new Date().toISOString() };
+  const cleanName = playerName.slice(0, 15);
+  return { playerName: cleanName, playerNameKey: cleanName.trim().toLowerCase().replace(/\s+/g, ' '), deviceId, score: Number(score) || 0, hits, attempts, accuracy: attempts ? Math.round((hits / attempts) * 100) : 0, playedAt: new Date().toISOString() };
 }
 function saveLocalScore(entry) {
-  const scores = JSON.parse(localStorage.getItem('colorRushScores') || '[]'); scores.push(entry); scores.sort((a, b) => b.score - a.score); localStorage.setItem('colorRushScores', JSON.stringify(scores.slice(0, 20)));
+  const scores = JSON.parse(localStorage.getItem('colorRushScores') || '[]'); scores.push(entry); scores.sort((a, b) => b.score - a.score); localStorage.setItem('colorRushScores', JSON.stringify(scores.slice(0, 100)));
 }
 
 async function submitScore(payload) {
@@ -180,40 +198,85 @@ async function endGame() {
   await loadLeaderboard(true);
 }
 
-async function fetchHostedScores() {
-  const response = await fetch('/api/leaderboard', { headers: { Accept: 'application/json' } });
+async function fetchHostedProfiles() {
+  const response = await fetch('/api/leaderboard', { headers: { Accept: 'application/json' }, cache: 'no-store' });
   const body = await response.json(); if (!response.ok || !body.ok) throw new Error(body.error || 'Leaderboard unavailable');
-  return Array.isArray(body.scores) ? body.scores : [];
+  return Array.isArray(body.profiles) ? body.profiles : (Array.isArray(body.scores) ? body.scores : []);
 }
 
-function localScores() {
-  return JSON.parse(localStorage.getItem('colorRushScores') || '[]').map((entry) => ({ playerName: entry.playerName, score: entry.score, hits: entry.hits, attempts: entry.attempts, accuracy: entry.accuracy }));
+function localProfiles() {
+  const entries = JSON.parse(localStorage.getItem('colorRushScores') || '[]');
+  const groups = new Map();
+  entries.forEach((entry) => {
+    const key = `${entry.deviceId || deviceId}::${entry.playerNameKey || String(entry.playerName || '').trim().toLowerCase()}`;
+    const existing = groups.get(key) || { playerName: entry.playerName, topScore: -Infinity, totalGames: 0, averageAccuracy: 0, lastPlayed: entry.playedAt, history: [] };
+    existing.history.push({ score: Number(entry.score) || 0, hits: entry.hits || 0, attempts: entry.attempts || 0, accuracy: entry.accuracy || 0, playedAt: entry.playedAt });
+    existing.totalGames = existing.history.length; existing.topScore = Math.max(existing.topScore, Number(entry.score) || 0); existing.averageAccuracy = Math.round(existing.history.reduce((sum, item) => sum + Number(item.accuracy || 0), 0) / existing.totalGames); existing.lastPlayed = new Date(entry.playedAt || 0) > new Date(existing.lastPlayed || 0) ? entry.playedAt : existing.lastPlayed;
+    groups.set(key, existing);
+  });
+  return [...groups.values()].sort((a, b) => b.topScore - a.topScore);
+}
+
+function readCachedLeaderboard() {
+  if (leaderboardCache.length) return leaderboardCache;
+  try { leaderboardCache = JSON.parse(localStorage.getItem(LEADERBOARD_CACHE_KEY) || '[]'); leaderboardCacheAt = Number(localStorage.getItem(LEADERBOARD_CACHE_AT_KEY) || 0); } catch (_) { leaderboardCache = []; }
+  return leaderboardCache;
+}
+
+function writeCachedLeaderboard(profiles) {
+  leaderboardCache = profiles; leaderboardCacheAt = Date.now(); lastScores = profiles;
+  localStorage.setItem(LEADERBOARD_CACHE_KEY, JSON.stringify(profiles)); localStorage.setItem(LEADERBOARD_CACHE_AT_KEY, String(leaderboardCacheAt));
+}
+
+function paintLeaderboard(profiles, isResult = false) {
+  lastScores = profiles;
+  renderLeaderboard(profiles, $('leaderboard-ul'));
+  renderLeaderboard(profiles.slice(0, 3), $('rules-top-list'), true);
+  if (isResult) renderLeaderboard(profiles.slice(0, 5), $('result-leaderboard-list'), true);
+}
+
+async function prefetchLeaderboard(force = false) {
+  const cached = readCachedLeaderboard();
+  if (cached.length) paintLeaderboard(cached);
+  if (!force && cached.length && Date.now() - leaderboardCacheAt < 60000) return cached;
+  try {
+    const profiles = await fetchHostedProfiles(); writeCachedLeaderboard(profiles); paintLeaderboard(profiles);
+    $('live-indicator')?.classList.remove('hidden'); $('result-database-status')?.classList.remove('hidden');
+    return profiles;
+  } catch (_) {
+    const fallback = cached.length ? cached : localProfiles();
+    if (fallback.length) { writeCachedLeaderboard(fallback); paintLeaderboard(fallback); }
+    $('live-indicator')?.classList.add('hidden'); $('result-database-status')?.classList.add('hidden');
+    return fallback;
+  }
 }
 
 async function loadLeaderboard(isResult = false) {
-  $('loading-state').classList.remove('hidden'); $('error-state').classList.add('hidden');
-  let scores;
-  try {
-    scores = await fetchHostedScores();
-    $('live-indicator').classList.remove('hidden');
-    $('result-database-status').classList.remove('hidden');
-  } catch (_) {
-    scores = localScores().slice(0, 10);
-    $('live-indicator').classList.add('hidden');
-    $('result-database-status').classList.add('hidden');
-    $('error-state').classList.remove('hidden');
-  }
-  $('loading-state').classList.add('hidden'); lastScores = scores;
-  renderLeaderboard(scores, $('leaderboard-ul')); if (isResult) renderLeaderboard(scores.slice(0, 5), $('result-leaderboard-list'), true);
+  const cached = readCachedLeaderboard();
+  if (cached.length) { paintLeaderboard(cached, isResult); $('loading-state').classList.add('hidden'); }
+  else { $('loading-state').classList.remove('hidden'); $('error-state').classList.add('hidden'); }
+  const scores = await prefetchLeaderboard(true);
+  if (!scores.length) $('error-state').classList.remove('hidden'); else $('error-state').classList.add('hidden');
+  $('loading-state').classList.add('hidden'); paintLeaderboard(scores, isResult);
 }
 
-function renderLeaderboard(scores, list, mini = false) {
+function renderLeaderboard(profiles, list, mini = false) {
   if (!list) return; list.replaceChildren();
-  if (!scores.length) { list.innerHTML = '<li class="empty-row">No runs yet. Be the first.</li>'; return; }
-  scores.slice(0, mini ? 5 : 10).forEach((entry, index) => {
-    const li = document.createElement('li'); const name = entry.playerName || entry.player_name || 'Anonymous';
-    li.innerHTML = `<span class="rank"><b>${String(index + 1).padStart(2, '0')}</b><strong>${escapeHTML(name)}</strong></span><span class="leader-score">${Number(entry.score) || 0}<small> pts</small></span>`; list.appendChild(li);
+  if (!profiles.length) { list.innerHTML = '<li class="empty-row">No runs yet. Be the first.</li>'; return; }
+  profiles.slice(0, mini ? 5 : 50).forEach((entry, index) => {
+    const li = document.createElement('li'); li.className = `leaderboard-row ${index < 3 ? 'top-rank' : ''}`;
+    const name = entry.playerName || 'Anonymous'; const historyCount = Number(entry.totalGames || entry.history?.length || 1); const topScore = Number(entry.topScore ?? entry.score ?? 0);
+    li.innerHTML = `<button class="leaderboard-profile" type="button"><span class="rank"><b>${String(index + 1).padStart(2, '0')}</b><strong>${escapeHTML(name)}</strong><small>${historyCount} ${historyCount === 1 ? 'run' : 'runs'} · ${Number(entry.averageAccuracy || entry.accuracy || 0)}% avg</small></span><span class="leader-score">${topScore}<small> top</small><i>→</i></span></button>`;
+    li.querySelector('button').addEventListener('click', () => showProfile(entry)); list.appendChild(li);
   });
+}
+
+function showProfile(profile) {
+  selectedProfile = profile; $('profile-detail').classList.remove('hidden'); $('profile-detail-name').textContent = profile.playerName || 'Anonymous'; $('profile-top-score').textContent = Number(profile.topScore || 0); $('profile-total-games').textContent = Number(profile.totalGames || profile.history?.length || 0); $('profile-accuracy').textContent = `${Number(profile.averageAccuracy || 0)}%`;
+  const history = Array.isArray(profile.history) ? profile.history : [];
+  $('profile-history').replaceChildren();
+  history.forEach((run, index) => { const li = document.createElement('li'); li.innerHTML = `<span><b>#${String(index + 1).padStart(2, '0')}</b><small>${new Date(run.playedAt || Date.now()).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</small></span><strong>${Number(run.score || 0)} <small>pts</small></strong>`; $('profile-history').appendChild(li); });
+  $('profile-detail').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function leaveGame() { cancelCountdown(); running = false; paused = false; clearInterval(timerId); showScreen($('start-screen')); }
@@ -231,9 +294,13 @@ $('btn-pause').addEventListener('click', () => togglePause()); $('btn-resume').a
 $('btn-game-back').addEventListener('click', leaveGame); $('btn-quit').addEventListener('click', endGame);
 $('btn-play-again').addEventListener('click', () => { $('player-name').value = playerName; showScreen($('start-screen')); $('player-name').focus(); });
 $('btn-result-back').addEventListener('click', () => { $('player-name').value = playerName; showScreen($('start-screen')); $('player-name').focus(); });
-$('btn-view-leaderboard').addEventListener('click', () => { showScreen($('leaderboard-screen')); loadLeaderboard(); });
+function openLeaderboard(fromScreen) { leaderboardReturnScreen = fromScreen; showScreen($('leaderboard-screen')); loadLeaderboard(); }
+$('btn-view-leaderboard').addEventListener('click', () => openLeaderboard($('result-screen')));
+$('btn-open-leaderboard-early').addEventListener('click', () => openLeaderboard($('rules-screen')));
 $('btn-leaderboard-again').addEventListener('click', () => { $('player-name').value = playerName; showScreen($('start-screen')); $('player-name').focus(); });
-$('btn-leaderboard-back').addEventListener('click', () => showScreen($('result-screen')));
+$('btn-leaderboard-back').addEventListener('click', () => { $('profile-detail').classList.add('hidden'); showScreen(leaderboardReturnScreen); });
+$('btn-profile-close').addEventListener('click', () => { $('profile-detail').classList.add('hidden'); selectedProfile = null; });
 $('btn-share').addEventListener('click', async () => { const message = `I scored ${score} points in Color Rush! Can you beat me?`; try { await navigator.clipboard.writeText(message); $('share-feedback').textContent = 'Result copied. Send it to your squad.'; } catch (_) { $('share-feedback').textContent = message; } $('share-feedback').classList.remove('hidden'); });
 document.addEventListener('keydown', (event) => { if (event.key.toLowerCase() === 'p' || event.key === 'Escape') togglePause(); });
 showScreen($('fullscreen-screen'));
+window.setTimeout(() => prefetchLeaderboard(), 80);

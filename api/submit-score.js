@@ -11,12 +11,14 @@ function databaseClient() {
 
 function cleanPayload(body = {}) {
   const playerName = String(body.playerName || 'Anonymous').trim().slice(0, 15) || 'Anonymous';
+  const playerNameKey = String(body.playerNameKey || playerName).trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 15);
+  const deviceId = String(body.deviceId || '').trim().slice(0, 64) || null;
   const numberOr = (value, fallback = 0) => Number.isFinite(Number(value)) ? Math.trunc(Number(value)) : fallback;
   const score = numberOr(body.score);
   const hits = Math.max(0, numberOr(body.hits));
   const attempts = Math.max(0, numberOr(body.attempts));
   const accuracy = Math.max(0, Math.min(100, numberOr(body.accuracy)));
-  return { playerName, score, hits, attempts, accuracy };
+  return { playerName, playerNameKey, deviceId, score, hits, attempts, accuracy };
 }
 
 async function ensureSchema(sql) {
@@ -24,6 +26,8 @@ async function ensureSchema(sql) {
     create table if not exists scores (
       id bigserial primary key,
       player_name varchar(15) not null,
+      player_name_key varchar(15),
+      device_id varchar(64),
       score integer not null default 0,
       hits integer not null default 0,
       attempts integer not null default 0,
@@ -31,15 +35,20 @@ async function ensureSchema(sql) {
       created_at timestamptz not null default now()
     )
   `;
+  await sql`alter table scores add column if not exists player_name_key varchar(15)`;
+  await sql`alter table scores add column if not exists device_id varchar(64)`;
+  await sql`update scores set player_name_key = lower(trim(player_name)) where player_name_key is null`;
   await sql`create index if not exists scores_score_created_idx on scores (score desc, created_at asc)`;
+  await sql`create index if not exists scores_name_key_idx on scores (player_name_key)`;
+  await sql`create index if not exists scores_device_id_idx on scores (device_id)`;
 }
 
 async function storeScore(sql, payload) {
   if (!sql) return { saved: false, configured: false };
   await ensureSchema(sql);
   await sql`
-    insert into scores (player_name, score, hits, attempts, accuracy)
-    values (${payload.playerName}, ${payload.score}, ${payload.hits}, ${payload.attempts}, ${payload.accuracy})
+    insert into scores (player_name, player_name_key, device_id, score, hits, attempts, accuracy)
+    values (${payload.playerName}, ${payload.playerNameKey}, ${payload.deviceId}, ${payload.score}, ${payload.hits}, ${payload.attempts}, ${payload.accuracy})
   `;
   return { saved: true, configured: true };
 }
@@ -92,21 +101,8 @@ export default async function handler(request, response) {
 
   const delivered = database.saved || telegram.sent;
   if (!delivered) {
-    return response.status(503).json({
-      ok: false,
-      error: 'No score destination is available',
-      databaseSaved: false,
-      telegramSent: false,
-      telegramConfigured: telegram.configured,
-      databaseError: database.error,
-      telegramError: telegram.error
-    });
+    return response.status(503).json({ ok: false, error: 'No score destination is available', databaseSaved: false, telegramSent: false, telegramConfigured: telegram.configured, databaseError: database.error, telegramError: telegram.error });
   }
 
-  return response.status(200).json({
-    ok: true,
-    databaseSaved: database.saved,
-    telegramSent: telegram.sent,
-    telegramConfigured: telegram.configured
-  });
+  return response.status(200).json({ ok: true, databaseSaved: database.saved, telegramSent: telegram.sent, telegramConfigured: telegram.configured });
 }

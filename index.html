@@ -53,6 +53,7 @@
         <div class="rule-item"><strong>30s</strong><span>per round</span></div>
       </div>
       <div class="how-row"><span class="step-number">01</span><span>Look at the target chip</span><span class="step-number">02</span><span>Tap matching orbs</span><span class="step-number">03</span><span>Climb the board</span></div>
+      <div class="early-leaderboard"><div class="mini-heading"><span>LIVE TOP 3</span><span class="database-status"><span></span><b>READY</b></span><button id="btn-open-leaderboard-early" class="inline-button">View all →</button></div><ol id="rules-top-list" class="mini-list"></ol></div>
       <button id="btn-got-it" class="primary-button">Enter the arena <span>↗</span></button>
       <p class="microcopy">Fast hands. Clear eyes. No second chances.</p>
     </section>
@@ -94,9 +95,10 @@
     </section>
 
     <section id="leaderboard-screen" class="screen card leaderboard-card hidden">
-      <div class="leaderboard-header"><div><div class="eyebrow">GLOBAL RANKINGS <span></span> 05</div><h2>Top <em>players.</em></h2></div><div id="live-indicator" class="database-status hidden"><span></span><b>SYNCED</b></div></div>
+      <div class="leaderboard-header"><div><div class="eyebrow">GLOBAL RANKINGS <span></span> 05</div><h2>Top <em>players.</em></h2><p class="leaderboard-subtitle">Same player. One profile. Every run.</p></div><div id="live-indicator" class="database-status hidden"><span></span><b>SYNCED</b></div></div>
       <div id="loading-state" class="loading-text hidden">Syncing scores…</div><div id="error-state" class="error-text hidden">Could not load online scores. Showing local scores.</div>
       <ol id="leaderboard-ul" class="leaderboard-list"></ol>
+      <section id="profile-detail" class="profile-detail hidden" aria-live="polite"><div class="profile-detail-head"><div><span class="hud-label">PLAYER PROFILE</span><h3 id="profile-detail-name">Player</h3></div><button id="btn-profile-close" class="text-button">Close</button></div><div class="profile-stats"><div><strong id="profile-top-score">0</strong><span>top score</span></div><div><strong id="profile-total-games">0</strong><span>total games</span></div><div><strong id="profile-accuracy">0%</strong><span>avg accuracy</span></div></div><ol id="profile-history" class="history-list"></ol></section>
       <button id="btn-leaderboard-again" class="secondary-button">Play another round</button><button id="btn-leaderboard-back" class="text-button">← Back to results</button>
     </section>
 

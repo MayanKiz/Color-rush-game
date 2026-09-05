@@ -153,3 +153,38 @@ body.guide-open { overflow: hidden; }
 .guide-visual { height: clamp(250px, 42vw, 340px); }
 .guide-visual img { height: 100%; max-height: none; object-fit: contain; object-position: center; background: #080d27; }
 @media (max-width: 520px) { .guide-visual { height: 260px; } .guide-visual img { max-height: none; } }
+
+/* Grouped leaderboard and background-prefetch UI */
+.early-leaderboard { margin: 18px 0 20px; padding: 14px; border: 1px solid rgba(166,149,237,.16); border-radius: 14px; background: rgba(9,14,39,.52); }
+.early-leaderboard .mini-heading { margin-bottom: 8px; }
+.leaderboard-subtitle { margin: -8px 0 0; color: var(--muted); font-size: 12px; }
+.database-status b { letter-spacing: .1em; }
+.leaderboard-list { gap: 8px; }
+.leaderboard-row { list-style: none; margin: 0; }
+.leaderboard-profile { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 15px; border: 1px solid rgba(247,244,236,.08); border-radius: 14px; color: var(--text); background: rgba(255,255,255,.025); text-align: left; cursor: pointer; transition: transform .2s ease, border-color .2s ease, background .2s ease; }
+.leaderboard-profile:hover, .leaderboard-profile:focus-visible { transform: translateY(-2px); border-color: rgba(230,201,130,.5); background: rgba(230,201,130,.07); outline: none; }
+.leaderboard-row.top-rank .leaderboard-profile { border-color: rgba(166,149,237,.22); background: linear-gradient(110deg, rgba(166,149,237,.1), rgba(230,201,130,.045)); }
+.leaderboard-profile .rank { display: grid; grid-template-columns: 34px minmax(0,1fr); align-items: center; column-gap: 10px; min-width: 0; }
+.leaderboard-profile .rank b { grid-row: span 2; color: var(--gold); font: 700 11px 'Space Grotesk'; letter-spacing: .08em; }
+.leaderboard-profile .rank strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 14px 'Space Grotesk'; }
+.leaderboard-profile .rank small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 10px; }
+.leader-score { display: flex; flex: 0 0 auto; align-items: center; gap: 5px; color: var(--text); font: 700 20px 'Space Grotesk'; }
+.leader-score small { color: var(--muted); font: 500 9px 'DM Sans'; text-transform: uppercase; letter-spacing: .1em; }
+.leader-score i { margin-left: 7px; color: var(--gold); font-style: normal; font-size: 16px; }
+.profile-detail { margin: 18px 0; padding: 17px; border: 1px solid rgba(166,149,237,.24); border-radius: 16px; background: rgba(8,13,35,.7); animation: guide-in .3s ease both; }
+.profile-detail-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.profile-detail h3 { margin: 5px 0 0; color: var(--text); font: 600 21px 'Space Grotesk'; }
+.profile-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 15px 0; }
+.profile-stats > div { padding: 10px 8px; border: 1px solid rgba(247,244,236,.08); border-radius: 10px; text-align: center; }
+.profile-stats strong { display: block; color: var(--gold); font: 700 18px 'Space Grotesk'; }
+.profile-stats span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
+.history-list { display: grid; gap: 6px; max-height: 220px; margin: 0; padding: 0 2px; overflow-y: auto; list-style: none; }
+.history-list li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 10px; border-bottom: 1px solid rgba(247,244,236,.07); color: var(--muted); font-size: 11px; }
+.history-list li > span { display: flex; align-items: baseline; gap: 8px; }
+.history-list li b { color: var(--gold); font: 600 10px 'Space Grotesk'; }
+.history-list li small { color: var(--muted); font-size: 10px; }
+.history-list li > strong { color: var(--text); font: 600 14px 'Space Grotesk'; }
+.history-list li > strong small { font-family: 'DM Sans'; }
+.loading-text { min-height: 42px; display: grid; place-items: center; border: 1px solid rgba(166,149,237,.13); border-radius: 12px; background: linear-gradient(90deg, rgba(166,149,237,.05), rgba(230,201,130,.1), rgba(166,149,237,.05)); background-size: 200% 100%; animation: loading-shimmer 1.3s linear infinite; color: var(--muted); font-size: 12px; }
+@keyframes loading-shimmer { to { background-position: -200% 0; } }
+@media (max-width: 520px) { .leaderboard-profile { padding: 12px; } .leaderboard-profile .rank strong { font-size: 13px; } .profile-stats strong { font-size: 16px; } }
