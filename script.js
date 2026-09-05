@@ -267,7 +267,7 @@ function renderLeaderboard(profiles, list, mini = false) {
     const li = document.createElement('li'); li.className = `leaderboard-row ${index < 3 ? 'top-rank' : ''}`;
     const name = entry.playerName || 'Anonymous'; const historyCount = Number(entry.totalGames || entry.history?.length || 1); const topScore = Number(entry.topScore ?? entry.score ?? 0);
     li.innerHTML = `<button class="leaderboard-profile" type="button"><span class="rank"><b>${String(index + 1).padStart(2, '0')}</b><strong>${escapeHTML(name)}</strong><small>${historyCount} ${historyCount === 1 ? 'run' : 'runs'} · ${Number(entry.averageAccuracy || entry.accuracy || 0)}% avg</small></span><span class="leader-score">${topScore}<small> top</small><i>→</i></span></button>`;
-    li.querySelector('button').addEventListener('click', () => showProfile(entry)); list.appendChild(li);
+    li.querySelector('button').addEventListener('click', () => { const preview = list.id === 'rules-top-list' || list.id === 'result-leaderboard-list'; if (preview) { openLeaderboard(list.id === 'rules-top-list' ? $('rules-screen') : $('result-screen')); window.setTimeout(() => showProfile(entry), 0); } else showProfile(entry); }); list.appendChild(li);
   });
 }
 
