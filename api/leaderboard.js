@@ -15,7 +15,6 @@ async function ensureSchema(sql) {
       id bigserial primary key,
       player_name varchar(15) not null,
       player_name_key varchar(15),
-      device_id varchar(64),
       score integer not null default 0,
       hits integer not null default 0,
       attempts integer not null default 0,
@@ -24,11 +23,9 @@ async function ensureSchema(sql) {
     )
   `;
   await sql`alter table scores add column if not exists player_name_key varchar(15)`;
-  await sql`alter table scores add column if not exists device_id varchar(64)`;
   await sql`update scores set player_name_key = lower(trim(player_name)) where player_name_key is null`;
   await sql`create index if not exists scores_score_created_idx on scores (score desc, created_at asc)`;
   await sql`create index if not exists scores_name_key_idx on scores (player_name_key)`;
-  await sql`create index if not exists scores_device_id_idx on scores (device_id)`;
 }
 
 function normalizeName(value) {
@@ -36,32 +33,15 @@ function normalizeName(value) {
 }
 
 function mergeProfiles(rows) {
-  const groups = [];
-  const groupFor = (row) => groups.find((group) => group.names.has(row.playerNameKey) || (row.deviceId && group.devices.has(row.deviceId)));
-
+  const groups = new Map();
   rows.forEach((row) => {
-    const normalized = normalizeName(row.playerNameKey || row.playerName);
-    let group = groupFor({ ...row, playerNameKey: normalized });
-    const connected = groups.filter((candidate) => candidate.names.has(normalized) || (row.deviceId && candidate.devices.has(row.deviceId)));
-    if (connected.length > 1) {
-      group = connected[0];
-      connected.slice(1).forEach((candidate) => {
-        candidate.rows.forEach((item) => group.rows.push(item));
-        candidate.names.forEach((name) => group.names.add(name));
-        candidate.devices.forEach((device) => group.devices.add(device));
-        groups.splice(groups.indexOf(candidate), 1);
-      });
-    }
-    if (!group) {
-      group = { rows: [], names: new Set(), devices: new Set() };
-      groups.push(group);
-    }
+    const key = normalizeName(row.playerNameKey || row.playerName) || 'anonymous';
+    const group = groups.get(key) || { rows: [] };
     group.rows.push(row);
-    group.names.add(normalized);
-    if (row.deviceId) group.devices.add(row.deviceId);
+    groups.set(key, group);
   });
 
-  return groups.map((group) => {
+  return [...groups.values()].map((group) => {
     const history = group.rows
       .sort((a, b) => b.score - a.score || new Date(b.playedAt) - new Date(a.playedAt))
       .map((row) => ({ id: row.id, score: row.score, hits: row.hits, attempts: row.attempts, accuracy: row.accuracy, playedAt: row.playedAt }));
@@ -85,7 +65,7 @@ export default async function handler(request, response) {
   try {
     await ensureSchema(sql);
     const rows = await sql`
-      select id, player_name as "playerName", player_name_key as "playerNameKey", device_id as "deviceId", score, hits, attempts, accuracy, created_at as "playedAt"
+      select id, player_name as "playerName", player_name_key as "playerNameKey", score, hits, attempts, accuracy, created_at as "playedAt"
       from scores
       order by score desc, created_at desc
       limit 5000

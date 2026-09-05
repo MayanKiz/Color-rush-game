@@ -33,17 +33,6 @@ let leaderboardReturnScreen = $('result-screen');
 let selectedProfile = null;
 const LEADERBOARD_CACHE_KEY = 'colorRushLeaderboardCache';
 const LEADERBOARD_CACHE_AT_KEY = 'colorRushLeaderboardCacheAt';
-const DEVICE_ID_KEY = 'colorRushDeviceId';
-
-function getDeviceId() {
-  let id = localStorage.getItem(DEVICE_ID_KEY);
-  if (!id) {
-    id = window.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
-    localStorage.setItem(DEVICE_ID_KEY, id);
-  }
-  return id;
-}
-const deviceId = getDeviceId();
 
 function showScreen(screen) {
   screens.forEach((item) => item.classList.toggle('hidden', item !== screen));
@@ -172,7 +161,7 @@ function togglePause(force) {
 
 function makePayload() {
   const cleanName = playerName.slice(0, 15);
-  return { playerName: cleanName, playerNameKey: cleanName.trim().toLowerCase().replace(/\s+/g, ' '), deviceId, score: Number(score) || 0, hits, attempts, accuracy: attempts ? Math.round((hits / attempts) * 100) : 0, playedAt: new Date().toISOString() };
+  return { playerName: cleanName, playerNameKey: cleanName.trim().toLowerCase().replace(/\s+/g, ' '), score: Number(score) || 0, hits, attempts, accuracy: attempts ? Math.round((hits / attempts) * 100) : 0, playedAt: new Date().toISOString() };
 }
 function saveLocalScore(entry) {
   const scores = JSON.parse(localStorage.getItem('colorRushScores') || '[]'); scores.push(entry); scores.sort((a, b) => b.score - a.score); localStorage.setItem('colorRushScores', JSON.stringify(scores.slice(0, 100)));
@@ -208,7 +197,7 @@ function localProfiles() {
   const entries = JSON.parse(localStorage.getItem('colorRushScores') || '[]');
   const groups = new Map();
   entries.forEach((entry) => {
-    const key = `${entry.deviceId || deviceId}::${entry.playerNameKey || String(entry.playerName || '').trim().toLowerCase()}`;
+    const key = entry.playerNameKey || String(entry.playerName || '').trim().toLowerCase().replace(/\s+/g, ' ');
     const existing = groups.get(key) || { playerName: entry.playerName, topScore: -Infinity, totalGames: 0, averageAccuracy: 0, lastPlayed: entry.playedAt, history: [] };
     existing.history.push({ score: Number(entry.score) || 0, hits: entry.hits || 0, attempts: entry.attempts || 0, accuracy: entry.accuracy || 0, playedAt: entry.playedAt });
     existing.totalGames = existing.history.length; existing.topScore = Math.max(existing.topScore, Number(entry.score) || 0); existing.averageAccuracy = Math.round(existing.history.reduce((sum, item) => sum + Number(item.accuracy || 0), 0) / existing.totalGames); existing.lastPlayed = new Date(entry.playedAt || 0) > new Date(existing.lastPlayed || 0) ? entry.playedAt : existing.lastPlayed;
