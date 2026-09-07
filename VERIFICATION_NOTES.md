@@ -17,3 +17,5 @@ The populated full leaderboard rendered the top player as a clean ranked row, an
 Refinement smoke test: the landing card is visibly wider and shorter, the copy is reduced, body scrolling is removed in favor of the contained app stage, and the rules view keeps a compact one-player leaderboard area.
 
 Second refinement smoke test: submitting a player name now opens a `ROUND READY` lobby with a clear `START ROUND` CTA and no active board. Only pressing that CTA triggers the countdown; the game board is not playable before the action.
+
+Component refactor verification: the entry, rules, setup, round-ready lobby, countdown, and active game arena all render after extraction. The desktop arena now shows the player name, target color, timer, score, streak, and a compact 4×4 board together at laptop viewport size. The page orchestrator is 246 lines, while reusable screens, modals, shared UI, and client utilities live in separate files under `components/color-rush/` and `lib/color-rush/`.
