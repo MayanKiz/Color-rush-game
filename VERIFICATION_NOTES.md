@@ -13,3 +13,7 @@ The live arena smoke test also confirmed the timer counts down, the target label
 After the sample round completed, the result screen displayed final score, hits, accuracy, best score, and a single compact leaderboard row for the top player. The local fallback board populated correctly even without Neon configuration, and the dedicated `View all` action remained available.
 
 The populated full leaderboard rendered the top player as a clean ranked row, and clicking that row opened the player profile with top score, total games, average accuracy, and run history. This confirms the separate leaderboard screen is not just a visual placeholder.
+
+Refinement smoke test: the landing card is visibly wider and shorter, the copy is reduced, body scrolling is removed in favor of the contained app stage, and the rules view keeps a compact one-player leaderboard area.
+
+Second refinement smoke test: submitting a player name now opens a `ROUND READY` lobby with a clear `START ROUND` CTA and no active board. Only pressing that CTA triggers the countdown; the game board is not playable before the action.

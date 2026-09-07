@@ -250,10 +250,9 @@ function FullscreenScreen({ onEnter, onContinue }) {
       <Eyebrow number="00">IMMERSIVE MODE</Eyebrow>
       <div className="hero-mark"><span /><span /><span /><span /><span /></div>
       <h1>Make room for<br /><em>your reflexes.</em></h1>
-      <p className="hero-copy">A calmer canvas, cleaner timing, and a little more space to chase the next perfect hit.</p>
+      <p className="hero-copy">A calmer canvas for one quick reflex test.</p>
       <Button onClick={onEnter}>Open the arena <ArrowUpRight size={17} /></Button>
       <button className="quiet-button" type="button" onClick={onContinue}>Continue in window <ArrowRight size={14} /></button>
-      <p className="microcopy"><Zap size={12} /> Fullscreen is optional. The rush is not.</p>
     </section>
   );
 }
@@ -262,12 +261,11 @@ function RulesScreen({ profiles, onEnterSetup, onViewLeaderboard, onSelectProfil
   return (
     <section className="screen-card hero-screen rules-screen">
       <Eyebrow number="01">NEURAL SPEED TEST</Eyebrow>
-      <div className="intro-row"><div><h1>Match the color.<br /><em>Beat the clock.</em></h1><p className="hero-copy">Find the target, trust your eyes, and tap before the board shifts again.</p></div><div className="mini-spark"><Sparkles size={20} /><span>30<br /><small>SEC</small></span></div></div>
-      <div className="stat-strip"><div><strong>+5</strong><span>correct hit</span></div><div><strong>−3</strong><span>wrong orb</span></div><div><strong>25</strong><span>orbs per round</span></div></div>
-      <div className="how-row"><span className="step-number">01</span><span>See the target</span><ChevronRight /><span className="step-number">02</span><span>Tap the match</span><ChevronRight /><span className="step-number">03</span><span>Build your streak</span></div>
+      <div className="intro-row"><div><h1>Match the color.<br /><em>Beat the clock.</em></h1><p className="hero-copy">Find the target. Tap the match. Chase your streak.</p></div><div className="mini-spark"><Sparkles size={20} /><span>30<br /><small>SEC</small></span></div></div>
+      <div className="stat-strip"><div><strong>+5</strong><span>hit</span></div><div><strong>−3</strong><span>miss</span></div><div><strong>25</strong><span>orbs</span></div></div>
       <LeaderboardPreview profiles={profiles} onViewAll={onViewLeaderboard} onSelect={onSelectProfile} />
       <Button onClick={onEnterSetup}>Enter the arena <ArrowRight size={17} /></Button>
-      <p className="microcopy">Fast hands. Clear eyes. No second chances.</p>
+      <p className="microcopy">Fast hands. Clear eyes.</p>
     </section>
   );
 }
@@ -277,7 +275,7 @@ function SetupScreen({ playerName, setPlayerName, error, onBack, onStart }) {
     <section className="screen-card setup-screen">
       <Eyebrow number="02">PLAYER SETUP</Eyebrow>
       <h2>Ready when <em>you are.</em></h2>
-      <p className="section-copy">Your best run gets a tiny place on the board. No account, no noise.</p>
+      <p className="section-copy">Choose a name for the board.</p>
       <label className="field-label" htmlFor="player-name">Display name</label>
       <input id="player-name" className={`name-input ${error ? 'has-error' : ''}`} value={playerName} onChange={(event) => setPlayerName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') onStart(); }} maxLength={15} placeholder="e.g. rao.mynkk" autoComplete="nickname" autoFocus />
       {error ? <p className="error-text">Please enter 2–15 characters.</p> : <p className="input-hint">2–15 characters · shown on the global board</p>}
@@ -292,8 +290,19 @@ function CountdownOverlay({ value }) {
   return <div className="countdown-overlay" aria-live="assertive"><span>GET READY</span><strong>{value}</strong><small>COLOR RUSH</small></div>;
 }
 
-function GameScreen({ game, onOrb, onPause, onBack, onQuit }) {
+function GameScreen({ game, onOrb, onPause, onBack, onQuit, onStart }) {
   const progress = Math.max(0, Math.min(100, (game.timeLeft / GAME_DURATION) * 100));
+  if (!game.running && !game.target) {
+    return (
+      <section className="screen-card game-lobby">
+        <Eyebrow number="03">ROUND READY</Eyebrow>
+        <div className="lobby-layout"><div><h2>Ready to<br /><em>rush?</em></h2><p className="section-copy">The board is set. Start when your eyes are ready.</p></div><div className="lobby-orb-cluster"><span /><span /><span /><span /><span /></div></div>
+        <div className="lobby-meta"><span><strong>30s</strong> round</span><span><strong>+5</strong> correct</span><span><strong>−3</strong> miss</span></div>
+        <Button onClick={onStart}>Start round <Play size={17} /></Button>
+        <button className="quiet-button" type="button" onClick={onBack}><ArrowLeft size={14} /> Back to setup</button>
+      </section>
+    );
+  }
   return (
     <section className="game-screen">
       <div className="game-topline"><button className="back-button" type="button" onClick={onBack}><ArrowLeft size={15} /> Back</button><div className="target-lock"><span className="target-kicker">TARGET COLOR <i /></span><div className="target-name-line"><span className="target-swatch" style={{ backgroundColor: game.target?.hex, boxShadow: `0 0 24px ${game.target?.hex}88` }} /><strong style={{ color: game.target?.hex }}>{game.target?.name?.toUpperCase()}</strong></div><span className="target-note">match the orb</span></div><button className="icon-button" type="button" onClick={onPause} aria-label={game.paused ? 'Resume game' : 'Pause game'}>{game.paused ? <Play size={16} /> : <Pause size={16} />}</button></div>
@@ -324,7 +333,13 @@ function ProfileDetail({ profile, onClose }) {
   if (!profile) return null;
   const history = Array.isArray(profile.history) ? profile.history : [];
   return (
-    <section className="profile-detail" aria-live="polite"><div className="profile-head"><div><span className="section-kicker">PLAYER PROFILE</span><h3>{profile.playerName || 'Anonymous'}</h3></div><button className="icon-button subtle" type="button" onClick={onClose} aria-label="Close profile"><X size={16} /></button></div><div className="profile-stats"><div><strong>{Number(profile.topScore || 0)}</strong><span>top score</span></div><div><strong>{Number(profile.totalGames || history.length || 0)}</strong><span>total games</span></div><div><strong>{Number(profile.averageAccuracy || 0)}%</strong><span>avg accuracy</span></div></div><ol className="history-list">{history.length ? history.map((run, index) => <li key={`${run.playedAt}-${index}`}><span><b>#{String(index + 1).padStart(2, '0')}</b><small>{formatDate(run.playedAt)}</small></span><strong>{Number(run.score || 0)} <small>pts</small></strong></li>) : <li className="history-empty">No history yet.</li>}</ol></section>
+    <div className="profile-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-title">
+        <div className="profile-head"><div><span className="section-kicker">PLAYER PROFILE</span><h3 id="profile-title">{profile.playerName || 'Anonymous'}</h3></div><button className="icon-button subtle" type="button" onClick={onClose} aria-label="Close profile"><X size={16} /></button></div>
+        <div className="profile-stats"><div><strong>{Number(profile.topScore || 0)}</strong><span>top score</span></div><div><strong>{Number(profile.totalGames || history.length || 0)}</strong><span>total games</span></div><div><strong>{Number(profile.averageAccuracy || 0)}%</strong><span>avg accuracy</span></div></div>
+        <ol className="history-list">{history.length ? history.map((run, index) => <li key={`${run.playedAt}-${index}`}><span><b>#{String(index + 1).padStart(2, '0')}</b><small>{formatDate(run.playedAt)}</small></span><strong>{Number(run.score || 0)} <small>pts</small></strong></li>) : <li className="history-empty">No history yet.</li>}</ol>
+      </section>
+    </div>
   );
 }
 
@@ -344,7 +359,7 @@ function LeaderboardScreen({ profiles, loading, synced, error, selectedProfile, 
 
   return (
     <section className="screen-card leaderboard-screen">
-      <div className="leaderboard-header"><div><Eyebrow number="05">GLOBAL RANKINGS</Eyebrow><h2>Top <em>players.</em></h2><p className="section-copy">One profile. Every run. A little proof that you showed up.</p></div><StatusPill synced={synced} /></div>
+      <div className="leaderboard-header"><div><Eyebrow number="05">GLOBAL RANKINGS</Eyebrow><h2>Top <em>players.</em></h2><p className="section-copy">One clean board. Tap a player for details.</p></div><StatusPill synced={synced} /></div>
       {loading ? <div className="loading-state"><span className="loading-orb" /> syncing the arena…</div> : null}
       {error ? <div className="offline-note">Showing the local board while the arena reconnects.</div> : null}
       <ol className="leaderboard-list">
@@ -467,7 +482,14 @@ export default function ColorRush() {
     }
     setNameError(false);
     if (window.localStorage.getItem('colorRushGuideSeen') !== '1') setGuideOpen(true);
-    else startCountdown();
+    else openGameLobby();
+  };
+
+  const openGameLobby = () => {
+    clearTimeout(countdownRef.current);
+    setCountdown(null);
+    setGame(initialGame);
+    setScreen('game');
   };
 
   const startGame = () => {
@@ -550,12 +572,12 @@ export default function ColorRush() {
         {screen === 'fullscreen' ? <FullscreenScreen onEnter={enterFullscreen} onContinue={showRules} /> : null}
         {screen === 'rules' ? <RulesScreen profiles={profiles} onEnterSetup={() => { setScreen('setup'); window.setTimeout(() => document.getElementById('player-name')?.focus(), 50); }} onViewLeaderboard={() => openLeaderboard('rules')} onSelectProfile={(profile) => { openLeaderboard('rules'); setSelectedProfile(profile); }} /> : null}
         {screen === 'setup' ? <SetupScreen playerName={playerName} setPlayerName={setPlayerName} error={nameError} onBack={showRules} onStart={startFromSetup} /> : null}
-        {screen === 'game' ? <GameScreen game={game} onOrb={handleOrb} onPause={togglePause} onBack={leaveGame} onQuit={finishGame} /> : null}
+        {screen === 'game' ? <GameScreen game={game} onOrb={handleOrb} onPause={togglePause} onBack={leaveGame} onQuit={finishGame} onStart={startCountdown} /> : null}
         {screen === 'result' && result ? <ResultScreen result={result} profiles={profiles} onViewLeaderboard={() => openLeaderboard('result')} onSelectProfile={(profile) => { openLeaderboard('result'); setSelectedProfile(profile); }} onPlayAgain={playAgain} onBack={() => setScreen('setup')} onShare={shareResult} shareFeedback={shareFeedback} /> : null}
         {screen === 'leaderboard' ? <LeaderboardScreen profiles={profiles} loading={leaderboardLoading} synced={leaderboardSynced} error={leaderboardError} selectedProfile={selectedProfile} onSelect={setSelectedProfile} onCloseProfile={() => setSelectedProfile(null)} onPlayAgain={playAgain} onBack={() => { setSelectedProfile(null); setScreen(leaderboardReturn); }} /> : null}
       </div>
       <Footer />
-      {guideOpen ? <GuideModal onClose={() => { setGuideOpen(false); setScreen('setup'); }} onStart={() => { window.localStorage.setItem('colorRushGuideSeen', '1'); setGuideOpen(false); startCountdown(); }} /> : null}
+      {guideOpen ? <GuideModal onClose={() => { setGuideOpen(false); setScreen('setup'); }} onStart={() => { window.localStorage.setItem('colorRushGuideSeen', '1'); setGuideOpen(false); openGameLobby(); }} /> : null}
       {countdown ? <CountdownOverlay value={countdown} /> : null}
     </main>
   );
