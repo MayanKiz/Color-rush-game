@@ -19,3 +19,7 @@ Refinement smoke test: the landing card is visibly wider and shorter, the copy i
 Second refinement smoke test: submitting a player name now opens a `ROUND READY` lobby with a clear `START ROUND` CTA and no active board. Only pressing that CTA triggers the countdown; the game board is not playable before the action.
 
 Component refactor verification: the entry, rules, setup, round-ready lobby, countdown, and active game arena all render after extraction. The desktop arena now shows the player name, target color, timer, score, streak, and a compact 4×4 board together at laptop viewport size. The page orchestrator is 246 lines, while reusable screens, modals, shared UI, and client utilities live in separate files under `components/color-rush/` and `lib/color-rush/`.
+
+Landscape arena verification: at a 2340×1080 browser window, the active screen uses the new split layout. The target panel measures 264×586 on the left, the play area measures 733×586 on the right, and the 4×4 board is fully visible at 430×430. The target color, player name, round, HUD, feedback, and end-round action remain visible.
+
+Portrait verification: at a mobile-sized viewport, the split breakpoint stays disabled. The target panel becomes a compact horizontal strip above the HUD and the play area remains below it, preserving the mobile vertical flow.
