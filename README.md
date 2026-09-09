@@ -30,7 +30,7 @@ The browser reads `GET /api/leaderboard`, while `POST /api/submit-score` persist
 If the hosted database is unavailable, the browser falls back to local scores in `localStorage` and labels the full leaderboard as `LOCAL CACHE`. The diagnostic route is:
 
 ```text
-https://YOUR-DOMAIN.vercel.app/api/database-health
+https://color-rush-gameee.vercel.app/api/database-health
 ```
 
 A healthy response includes `ok: true`, `databaseConfigured: true`, `scoresTable: true`, and a `rowCount`.
@@ -47,7 +47,7 @@ TELEGRAM_CHAT_ID=your_chat_or_channel_id
 The bot must have access to the destination chat. Verify the integration at:
 
 ```text
-https://YOUR-DOMAIN.vercel.app/api/telegram-health
+https://color-rush-gameee.vercel.app/api/telegram-health
 ```
 
 Do not place real secrets in GitHub or frontend JavaScript. [1]
