@@ -31,10 +31,11 @@ const COLORS = [
   { name: 'Orange', hex: '#ffad74' },
 ];
 
-const GAME_DURATION = 30;
+const GAME_DURATION = 60;
 const TOTAL_CIRCLES = 25;
 const POINTS_CORRECT = 5;
 const POINTS_WRONG = 3;
+const CORRECT_AUDIO_COUNT = 23;
 const LEADERBOARD_CACHE_KEY = 'colorRushLeaderboardCache';
 const LEADERBOARD_CACHE_AT_KEY = 'colorRushLeaderboardCacheAt';
 
@@ -46,6 +47,7 @@ const initialGame = {
   attempts: 0,
   round: 0,
   target: null,
+  promptColor: null,
   board: [],
   running: false,
   paused: false,
@@ -56,9 +58,10 @@ const initialGame = {
 
 function makeBoard() {
   const target = COLORS[Math.floor(Math.random() * COLORS.length)];
+  const promptColor = COLORS.filter((color) => color.name !== target.name)[Math.floor(Math.random() * (COLORS.length - 1))];
   const board = Array.from({ length: TOTAL_CIRCLES }, () => COLORS[Math.floor(Math.random() * COLORS.length)]);
   board[Math.floor(Math.random() * board.length)] = target;
-  return { target, board };
+  return { target, promptColor, board };
 }
 
 function normalizeName(value) {
@@ -155,7 +158,7 @@ async function postScore(payload) {
   }
 }
 
-function playTone(correct) {
+function playWrongFeedback() {
   if (typeof window === 'undefined') return;
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -163,8 +166,8 @@ function playTone(correct) {
     const context = new AudioContext();
     const oscillator = context.createOscillator();
     const gain = context.createGain();
-    oscillator.type = correct ? 'sine' : 'sawtooth';
-    oscillator.frequency.value = correct ? 620 : 160;
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.value = 160;
     gain.gain.setValueAtTime(0.0001, context.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.07, context.currentTime + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.12);
@@ -174,7 +177,7 @@ function playTone(correct) {
   } catch {
     // Sound is optional and can be blocked by the browser.
   }
-  if (!correct && navigator.vibrate) navigator.vibrate([35, 35, 70]);
+  if (navigator.vibrate) navigator.vibrate([35, 35, 70]);
 }
 
 function Button({ children, variant = 'primary', className = '', ...props }) {
@@ -262,9 +265,9 @@ function RulesScreen({ profiles, onEnterSetup, onViewLeaderboard, onSelectProfil
   return (
     <section className="screen-card hero-screen rules-screen">
       <Eyebrow number="01">NEURAL SPEED TEST</Eyebrow>
-      <div className="intro-row"><div><h1>Match the color.<br /><em>Beat the clock.</em></h1><p className="hero-copy">Find the target, trust your eyes, and tap before the board shifts again.</p></div><div className="mini-spark"><Sparkles size={20} /><span>30<br /><small>SEC</small></span></div></div>
+      <div className="intro-row"><div><h1>Read the color name.<br /><em>Beat the clock.</em></h1><p className="hero-copy">Ignore the color of the word. Find the orb that matches the name you see.</p></div><div className="mini-spark"><Sparkles size={20} /><span>60<br /><small>SEC</small></span></div></div>
       <div className="stat-strip"><div><strong>+5</strong><span>correct hit</span></div><div><strong>−3</strong><span>wrong orb</span></div><div><strong>25</strong><span>orbs per round</span></div></div>
-      <div className="how-row"><span className="step-number">01</span><span>See the target</span><ChevronRight /><span className="step-number">02</span><span>Tap the match</span><ChevronRight /><span className="step-number">03</span><span>Build your streak</span></div>
+      <div className="how-row"><span className="step-number">01</span><span>Read the name</span><ChevronRight /><span className="step-number">02</span><span>Ignore its ink</span><ChevronRight /><span className="step-number">03</span><span>Tap the matching orb</span></div>
       <LeaderboardPreview profiles={profiles} onViewAll={onViewLeaderboard} onSelect={onSelectProfile} />
       <Button onClick={onEnterSetup}>Enter the arena <ArrowRight size={17} /></Button>
       <p className="microcopy">Fast hands. Clear eyes. No second chances.</p>
@@ -281,7 +284,7 @@ function SetupScreen({ playerName, setPlayerName, error, onBack, onStart }) {
       <label className="field-label" htmlFor="player-name">Display name</label>
       <input id="player-name" className={`name-input ${error ? 'has-error' : ''}`} value={playerName} onChange={(event) => setPlayerName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') onStart(); }} maxLength={15} placeholder="e.g. rao.mynkk" autoComplete="nickname" autoFocus />
       {error ? <p className="error-text">Please enter 2–15 characters.</p> : <p className="input-hint">2–15 characters · shown on the global board</p>}
-      <div className="setup-options"><div><span className="field-label">Round length</span><strong>30 seconds</strong></div><div><span className="field-label">Scoring</span><strong>+5 / −3</strong></div></div>
+      <div className="setup-options"><div><span className="field-label">Round length</span><strong>60 seconds</strong></div><div><span className="field-label">Scoring</span><strong>+5 / −3</strong></div></div>
       <Button onClick={onStart}>Start challenge <ArrowRight size={17} /></Button>
       <button className="quiet-button" type="button" onClick={onBack}><ArrowLeft size={14} /> Back to rules</button>
     </section>
@@ -296,9 +299,9 @@ function GameScreen({ game, onOrb, onPause, onBack, onQuit }) {
   const progress = Math.max(0, Math.min(100, (game.timeLeft / GAME_DURATION) * 100));
   return (
     <section className="game-screen">
-      <div className="game-topline"><button className="back-button" type="button" onClick={onBack}><ArrowLeft size={15} /> Back</button><div className="target-lock"><span className="target-kicker">TARGET COLOR <i /></span><div className="target-name-line"><span className="target-swatch" style={{ backgroundColor: game.target?.hex, boxShadow: `0 0 24px ${game.target?.hex}88` }} /><strong style={{ color: game.target?.hex }}>{game.target?.name?.toUpperCase()}</strong></div><span className="target-note">match the orb</span></div><button className="icon-button" type="button" onClick={onPause} aria-label={game.paused ? 'Resume game' : 'Pause game'}>{game.paused ? <Play size={16} /> : <Pause size={16} />}</button></div>
+      <div className="game-topline"><button className="back-button" type="button" onClick={onBack}><ArrowLeft size={15} /> Back</button><div className="target-lock"><span className="target-kicker">CHOOSE THIS COLOR NAME <i /></span><div className="target-name-line"><strong style={{ color: game.promptColor?.hex }}>{game.target?.name?.toUpperCase()}</strong></div><span className="target-note">ignore the word's ink color</span></div><button className="icon-button" type="button" onClick={onPause} aria-label={game.paused ? 'Resume game' : 'Pause game'}>{game.paused ? <Play size={16} /> : <Pause size={16} />}</button></div>
       <div className="hud-grid"><div className="hud-card timer-card"><div className="hud-card-top"><span className="hud-label"><Clock3 size={12} /> TIME LEFT</span><strong>{game.timeLeft.toFixed(1)}</strong></div><div className="progress-track"><span className={game.timeLeft <= 8 ? 'urgent' : ''} style={{ width: `${progress}%` }} /></div></div><div className="hud-card"><span className="hud-label">SCORE</span><strong>{game.score}</strong>{game.delta ? <span className={`score-delta ${game.delta > 0 ? 'positive' : 'negative'}`}>{game.delta > 0 ? '+' : '−'}{Math.abs(game.delta)}</span> : null}</div><div className="hud-card"><span className="hud-label">STREAK</span><strong>{game.streak}</strong><span className="hud-subline"><Flame size={12} /> {game.streak >= 3 ? 'on fire' : 'build it'}</span></div></div>
-      <div className="arena-wrap"><div className="arena-caption"><span>SELECT THE MATCHING ORB</span><span>ROUND {String(game.round).padStart(2, '0')}</span></div><div className="grid-board" aria-label="Color matching game board">{game.board.map((color, index) => <button key={`${game.round}-${index}`} className="color-orb" type="button" aria-label={`${color.name} orb`} style={{ '--orb-color': color.hex, '--delay': `${(index % 5) * 18}ms` }} onPointerDown={(event) => { event.preventDefault(); onOrb(color, event.currentTarget); }} />)}</div>{game.paused ? <div className="pause-overlay"><span className="pause-icon"><Pause size={17} /></span><strong>Take a breath.</strong><span>Your board is waiting.</span><Button onClick={() => onPause(false)}>Resume <Play size={15} /></Button></div> : null}</div>
+      <div className="arena-wrap"><div className="arena-caption"><span>SELECT THE ORB NAMED ABOVE</span><span>ROUND {String(game.round).padStart(2, '0')}</span></div><div className="grid-board" aria-label={`Choose the ${game.target?.name || ''} orb`}>{game.board.map((color, index) => <button key={`${game.round}-${index}`} className="color-orb" type="button" aria-label={`${color.name} orb`} style={{ '--orb-color': color.hex, '--delay': `${(index % 5) * 18}ms` }} onPointerDown={(event) => { event.preventDefault(); onOrb(color, event.currentTarget); }} />)}</div>{game.paused ? <div className="pause-overlay"><span className="pause-icon"><Pause size={17} /></span><strong>Take a breath.</strong><span>Your board is waiting.</span><Button onClick={() => onPause(false)}>Resume <Play size={15} /></Button></div> : null}</div>
       <div className="game-footer"><span aria-live="polite">{game.feedback}</span><button className="quiet-button danger" type="button" onClick={onQuit}>End round</button></div>
     </section>
   );
@@ -357,7 +360,7 @@ function LeaderboardScreen({ profiles, loading, synced, error, selectedProfile, 
 }
 
 function GuideModal({ onClose, onStart }) {
-  return <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="guide-title"><div className="guide-modal"><button className="modal-close" type="button" onClick={onClose} aria-label="Close guide"><X size={17} /></button><Eyebrow number="03">QUICK GUIDE</Eyebrow><h2 id="guide-title">Know the move.<br /><em>Own the board.</em></h2><div className="guide-visual"><img src="/how-to-play-guide.png" alt="A matching color orb guide" /></div><div className="guide-steps"><div><b>01</b><span><strong>See the target</strong> at the top of the arena.</span></div><div><b>02</b><span>Tap the orb with the <strong>same color</strong>.</span></div><div><b>03</b><span>Correct <strong>+5</strong>, wrong orb <strong>−3</strong>.</span></div></div><Button onClick={onStart}>Got it — start in 3s <ArrowRight size={16} /></Button></div></div>;
+  return <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="guide-title"><div className="guide-modal"><button className="modal-close" type="button" onClick={onClose} aria-label="Close guide"><X size={17} /></button><Eyebrow number="03">QUICK GUIDE</Eyebrow><h2 id="guide-title">Read the name.<br /><em>Ignore the ink.</em></h2><div className="guide-visual"><img src="/how-to-play-guide.png" alt="A color-name matching guide" /></div><div className="guide-steps"><div><b>01</b><span><strong>Read the color name</strong> at the top of the arena.</span></div><div><b>02</b><span>Ignore its ink and tap the orb with the <strong>named color</strong>.</span></div><div><b>03</b><span>Correct <strong>+5</strong>, wrong orb <strong>−3</strong>.</span></div></div><Button onClick={onStart}>Got it — start in 3s <ArrowRight size={16} /></Button></div></div>;
 }
 
 export default function ColorRush() {
@@ -378,6 +381,8 @@ export default function ColorRush() {
   const gameRef = useRef(game);
   const timerRef = useRef(null);
   const countdownRef = useRef(null);
+  const correctAudioRef = useRef(null);
+  const lastCorrectAudioRef = useRef(null);
 
   useEffect(() => { gameRef.current = game; }, [game]);
 
@@ -407,6 +412,7 @@ export default function ColorRush() {
     return () => {
       clearInterval(timerRef.current);
       clearTimeout(countdownRef.current);
+      correctAudioRef.current?.pause();
     };
   }, [loadLeaderboard]);
 
@@ -471,15 +477,32 @@ export default function ColorRush() {
   };
 
   const startGame = () => {
-    const { target, board } = makeBoard();
-    setGame({ ...initialGame, target, board, round: 1, running: true });
+    const { target, promptColor, board } = makeBoard();
+    setGame({ ...initialGame, target, promptColor, board, round: 1, running: true });
     setShareFeedback('');
     setScreen('game');
   };
 
   const nextBoard = () => {
-    const { target, board } = makeBoard();
-    setGame((current) => ({ ...current, target, board, round: current.round + 1, delta: null }));
+    const { target, promptColor, board } = makeBoard();
+    setGame((current) => ({ ...current, target, promptColor, board, round: current.round + 1, delta: null }));
+  };
+
+  const playCorrectAudio = () => {
+    let clip = Math.floor(Math.random() * CORRECT_AUDIO_COUNT) + 1;
+    if (CORRECT_AUDIO_COUNT > 1) {
+      while (clip === lastCorrectAudioRef.current) clip = Math.floor(Math.random() * CORRECT_AUDIO_COUNT) + 1;
+    }
+    lastCorrectAudioRef.current = clip;
+
+    correctAudioRef.current?.pause();
+    const audio = new Audio(`/right/right${clip}.mp3`);
+    audio.volume = 0.6;
+    correctAudioRef.current = audio;
+    audio.addEventListener('ended', () => {
+      if (correctAudioRef.current === audio) correctAudioRef.current = null;
+    }, { once: true });
+    void audio.play().catch(() => {});
   };
 
   const handleOrb = (color, node) => {
@@ -490,7 +513,8 @@ export default function ColorRush() {
     const nextScore = Math.max(-999, current.score + (correct ? POINTS_CORRECT : -POINTS_WRONG));
     const nextStreak = correct ? current.streak + 1 : 0;
     setGame((value) => ({ ...value, score: nextScore, streak: nextStreak, hits: value.hits + (correct ? 1 : 0), attempts: value.attempts + 1, delta: correct ? POINTS_CORRECT : -POINTS_WRONG, feedback: correct ? (nextStreak >= 3 ? `Streak x${nextStreak} — keep going!` : 'Nice hit. Find the next one.') : 'Missed. Reset your focus.' }));
-    playTone(correct);
+    if (correct) playCorrectAudio();
+    else playWrongFeedback();
     window.setTimeout(() => { if (gameRef.current.running) nextBoard(); }, 90);
   };
 
