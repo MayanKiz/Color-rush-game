@@ -12,7 +12,7 @@ export default function GameScreen({ game, playerName, onOrb, onPause, onBack, o
       <section className="screen-card game-lobby">
         <Eyebrow number="03">ROUND READY</Eyebrow>
         <div className="lobby-layout"><div><h2>Ready to<br /><em>rush?</em></h2><p className="section-copy">The board is set. Start when your eyes are ready.</p></div><div className="lobby-orb-cluster"><span /><span /><span /><span /><span /></div></div>
-        <div className="lobby-meta"><span><strong>30s</strong> round</span><span><strong>+5</strong> correct</span><span><strong>−3</strong> miss</span></div>
+        <div className="lobby-meta"><span><strong>{GAME_DURATION}s</strong> round</span><span><strong>+5</strong> correct</span><span><strong>−3</strong> miss</span></div>
         <Button onClick={onStart}>Start round <Play size={17} /></Button>
         <button className="quiet-button" type="button" onClick={onBack}><ArrowLeft size={14} /> Back to setup</button>
       </section>

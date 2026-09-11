@@ -2,6 +2,7 @@
 
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button, Eyebrow } from '../SharedUI';
+import { GAME_DURATION } from '../../../lib/color-rush/config';
 
 export default function SetupScreen({ playerName, setPlayerName, error, onBack, onStart }) {
   return (
@@ -12,7 +13,7 @@ export default function SetupScreen({ playerName, setPlayerName, error, onBack, 
       <label className="field-label" htmlFor="player-name">Display name</label>
       <input id="player-name" className={`name-input ${error ? 'has-error' : ''}`} value={playerName} onChange={(event) => setPlayerName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') onStart(); }} maxLength={15} placeholder="e.g. rao.mynkk" autoComplete="nickname" autoFocus />
       {error ? <p className="error-text">Please enter 2–15 characters.</p> : <p className="input-hint">2–15 characters · shown on the global board</p>}
-      <div className="setup-options"><div><span className="field-label">Round length</span><strong>30 seconds</strong></div><div><span className="field-label">Scoring</span><strong>+5 / −3</strong></div></div>
+      <div className="setup-options"><div><span className="field-label">Round length</span><strong>{GAME_DURATION} seconds</strong></div><div><span className="field-label">Scoring</span><strong>+5 / −3</strong></div></div>
       <Button onClick={onStart}>Start challenge <ArrowRight size={17} /></Button>
       <button className="quiet-button" type="button" onClick={onBack}><ArrowLeft size={14} /> Back to rules</button>
     </section>
