@@ -2,13 +2,13 @@
 import { ArrowLeft, ArrowRight, ChevronRight, Crown, Sparkles, CalendarDays } from 'lucide-react';
 import ProfileDetail from '../modals/ProfileDetail';
 import { Button, Eyebrow, StatusPill } from '../SharedUI';
-export default function LeaderboardScreen({ profiles, scores = [], dates = [], selectedDate, dateLabel, loading, synced, error, selectedProfile, onSelect, onDateChange, onCloseProfile, onPlayAgain, onBack }) {
-  const rows = scores.slice(0, 10).map((score, index) => ({ ...score, rank: score.rank || index + 1 }));
+export default function LeaderboardScreen({ profiles, scores = [], dates = [], selectedDate, dateLabel, totalPlayed = 0, loading, synced, error, selectedProfile, onSelect, onDateChange, onCloseProfile, onPlayAgain, onBack }) {
+  const rows = scores.map((score, index) => ({ ...score, rank: score.rank || index + 1 }));
   return (
     <section className="screen-card leaderboard-screen">
-      <div className="leaderboard-header"><div><Eyebrow number="05">DAILY RANKINGS</Eyebrow><h2>Today's <em>top 10.</em></h2><p className="section-copy">Fresh board every midnight, with every day saved.</p></div><StatusPill synced={synced} /></div>
+      <div className="leaderboard-header"><div><Eyebrow number="05">DAILY RANKINGS</Eyebrow><h2>Daily <em>scores.</em></h2><p className="section-copy">Fresh board every midnight, with every day saved.</p></div><StatusPill synced={synced} /></div>
       <div className="leaderboard-date-bar"><CalendarDays size={16} /><label htmlFor="leaderboard-date">View leaderboard</label><select id="leaderboard-date" value={selectedDate} onChange={(event) => onDateChange(event.target.value)}>{dates.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
-      <p className="leaderboard-date-label">{dateLabel}</p>
+      <p className="leaderboard-date-label">{dateLabel} <span>· {totalPlayed || scores.length} total played</span></p>
       {loading ? <div className="loading-state"><span className="loading-orb" /> syncing the arena…</div> : null}
       {error ? <div className="offline-note">Showing the local board while the arena reconnects.</div> : null}
       <ol className="leaderboard-list">

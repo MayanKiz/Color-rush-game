@@ -1,4 +1,4 @@
-import { databaseClient, ensureSchema, formatIstDate, getRankedScores, istDate } from '../../../lib/leaderboard-server.js';
+import { databaseClient, ensureSchema, formatIstDate, getLeaderboardDates, getRankedScores, istDate } from '../../../lib/leaderboard-server.js';
 export const dynamic = 'force-dynamic';
 export async function GET(request) {
   const sql = databaseClient();
@@ -8,9 +8,12 @@ export async function GET(request) {
   try {
     await ensureSchema(sql);
     const scores = await getRankedScores(sql, requestedDate);
-    const dates = (await sql`select to_char(date, 'YYYY-MM-DD') as date from leaderboard_history order by date desc limit 90`).map((row) => ({ value: row.date, label: formatIstDate(row.date) }));
+    const storedDates = await getLeaderboardDates(sql);
     const today = istDate();
-    return Response.json({ ok: true, date: requestedDate, dateLabel: requestedDate === today ? `Today's Leaderboard · ${formatIstDate(today)}` : formatIstDate(requestedDate), scores, dates: [{ value: today, label: `Today · ${formatIstDate(today)}` }, ...dates.filter((item) => item.value !== today)] });
+    const todayCount = requestedDate === today ? scores.length : (storedDates.find((item) => item.value === requestedDate)?.totalPlayed || scores.length);
+    const dates = storedDates.map((item) => ({ ...item, label: `${formatIstDate(item.value)} · ${item.totalPlayed} played` }));
+    const todayItem = { value: today, totalPlayed: today === requestedDate ? scores.length : (storedDates.find((item) => item.value === today)?.totalPlayed || 0), label: `Today · ${formatIstDate(today)} · ${today === requestedDate ? scores.length : (storedDates.find((item) => item.value === today)?.totalPlayed || 0)} played` };
+    return Response.json({ ok: true, date: requestedDate, totalPlayed: todayCount, dateLabel: requestedDate === today ? `Today's Leaderboard · ${formatIstDate(today)}` : `${formatIstDate(requestedDate)} · ${todayCount} played`, scores, dates: [todayItem, ...dates.filter((item) => item.value !== today)] });
   } catch (error) {
     console.error('leaderboard error', error);
     return Response.json({ ok: false, error: 'Could not load leaderboard' }, { status: 500 });
