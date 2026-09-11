@@ -78,4 +78,5 @@ The main page is intentionally a state-and-navigation orchestrator. Visual and i
 | Game constants | `lib/color-rush/config.js` | Colors, duration, board size, scoring, and initial game state |
 | Client helpers | `lib/color-rush/client-utils.js` | Board generation, local cache, API calls, score payload, and sound |
 
-The desktop arena uses a **4×4 board** and viewport-aware sizing so the player name, target, HUD, and controls remain visible at laptop 100% zoom. The body stays contained while the app stage handles any necessary internal overflow.
+The desktop arena uses a **4×4 board** and viewport-aware sizing so the player name, target, HUD, and controls remain visible at laptop 100% zoom. The body stays contained while the app stage handles any necessary internal overflow    .mynk.core
+
