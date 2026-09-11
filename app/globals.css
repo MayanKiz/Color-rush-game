@@ -410,3 +410,12 @@ h1 em, h2 em { color: var(--gold); font-style: normal; }
 }
 
 @keyframes target-pulse { 0%, 100% { transform: scale(.96); filter: brightness(.95); } 50% { transform: scale(1.04); filter: brightness(1.16); } }
+
+/* Daily leaderboard history */
+.leaderboard-date-bar { display: flex; align-items: center; gap: 9px; margin-top: 20px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.035); color: var(--muted); font: 700 10px 'Space Grotesk'; letter-spacing: .08em; }
+.leaderboard-date-bar svg { color: var(--lavender); flex: 0 0 auto; }
+.leaderboard-date-bar label { white-space: nowrap; }
+.leaderboard-date-bar select { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--text); font: 600 12px 'Space Grotesk'; text-align: right; cursor: pointer; }
+.leaderboard-date-bar option { background: #11152a; color: #fff; }
+.leaderboard-date-label { margin: 11px 2px 0; color: var(--gold); font: 600 11px 'Space Grotesk'; letter-spacing: .03em; }
+@media (max-width: 520px) { .leaderboard-date-bar { align-items: flex-start; flex-wrap: wrap; } .leaderboard-date-bar label { flex: 1; } .leaderboard-date-bar select { flex-basis: 100%; text-align: left; padding-top: 3px; } }

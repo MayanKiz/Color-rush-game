@@ -12,7 +12,7 @@ import GuideModal from '../components/color-rush/modals/GuideModal';
 import CountdownOverlay from '../components/color-rush/modals/CountdownOverlay';
 import { initialGame, POINTS_CORRECT, POINTS_WRONG } from '../lib/color-rush/config';
 import {
-  getHostedProfiles,
+  getHostedLeaderboard,
   localProfiles,
   makeBoard,
   normalizeName,
@@ -30,6 +30,10 @@ export default function ColorRush() {
   const [game, setGame] = useState(initialGame);
   const [result, setResult] = useState(null);
   const [profiles, setProfiles] = useState([]);
+  const [leaderboardScores, setLeaderboardScores] = useState([]);
+  const [leaderboardDates, setLeaderboardDates] = useState([]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [leaderboardDateLabel, setLeaderboardDateLabel] = useState('Today');
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardSynced, setLeaderboardSynced] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState(false);
@@ -44,19 +48,26 @@ export default function ColorRush() {
 
   useEffect(() => { gameRef.current = game; }, [game]);
 
-  const loadLeaderboard = useCallback(async (force = false) => {
+  const loadLeaderboard = useCallback(async (force = false, date = '') => {
     const cached = readCachedProfiles();
-    if (cached.length && !force) setProfiles(cached);
+    if (cached.length && !force && !date) setProfiles(cached);
     setLeaderboardLoading(true);
     setLeaderboardError(false);
     try {
-      const hosted = await getHostedProfiles();
-      setProfiles(hosted);
+      const hosted = await getHostedLeaderboard(date);
+      const scores = hosted.scores || [];
+      setLeaderboardScores(scores);
+      setLeaderboardDates(hosted.dates || []);
+      setSelectedDate(hosted.date || date);
+      setLeaderboardDateLabel(hosted.dateLabel || 'Today');
+      const nextProfiles = scores.map((score) => ({ playerName: score.username, topScore: score.score, totalGames: 1, averageAccuracy: score.accuracy, history: [score] }));
+      setProfiles(nextProfiles);
       setLeaderboardSynced(true);
-      writeCachedProfiles(hosted);
+      if (!date) writeCachedProfiles(nextProfiles);
     } catch {
       const fallback = cached.length ? cached : localProfiles();
       setProfiles(fallback);
+      setLeaderboardScores([]);
       setLeaderboardSynced(false);
       setLeaderboardError(true);
       if (fallback.length) writeCachedProfiles(fallback);
@@ -64,7 +75,6 @@ export default function ColorRush() {
       setLeaderboardLoading(false);
     }
   }, []);
-
   useEffect(() => {
     loadLeaderboard(false);
     return () => {
@@ -236,7 +246,7 @@ export default function ColorRush() {
         {screen === 'setup' ? <SetupScreen playerName={playerName} setPlayerName={setPlayerName} error={nameError} onBack={showRules} onStart={beginChallenge} /> : null}
         {screen === 'game' ? <GameScreen game={game} playerName={playerName} onOrb={handleOrb} onPause={togglePause} onBack={leaveGame} onQuit={finishGame} onStart={startCountdown} /> : null}
         {screen === 'result' && result ? <ResultScreen result={result} profiles={profiles} onViewLeaderboard={() => openLeaderboard('result')} onSelectProfile={(profile) => { openLeaderboard('result'); setSelectedProfile(profile); }} onPlayAgain={playAgain} onBack={goToSetup} onShare={shareResult} shareFeedback={shareFeedback} /> : null}
-        {screen === 'leaderboard' ? <LeaderboardScreen profiles={profiles} loading={leaderboardLoading} synced={leaderboardSynced} error={leaderboardError} selectedProfile={selectedProfile} onSelect={setSelectedProfile} onCloseProfile={() => setSelectedProfile(null)} onPlayAgain={playAgain} onBack={() => { setSelectedProfile(null); setScreen(leaderboardReturn); }} /> : null}
+        {screen === 'leaderboard' ? <LeaderboardScreen profiles={profiles} scores={leaderboardScores} dates={leaderboardDates} selectedDate={selectedDate} dateLabel={leaderboardDateLabel} onDateChange={(date) => loadLeaderboard(true, date)} loading={leaderboardLoading} synced={leaderboardSynced} error={leaderboardError} selectedProfile={selectedProfile} onSelect={setSelectedProfile} onCloseProfile={() => setSelectedProfile(null)} onPlayAgain={playAgain} onBack={() => { setSelectedProfile(null); setScreen(leaderboardReturn); }} /> : null}
       </div>
       <Footer />
       {guideOpen ? <GuideModal onClose={() => { setGuideOpen(false); setScreen('setup'); }} onStart={() => { window.localStorage.setItem('colorRushGuideSeen', '1'); setGuideOpen(false); openGameLobby(); }} /> : null}
