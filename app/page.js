@@ -36,6 +36,7 @@ const COLORS = [
 const GAME_DURATION = 60;
 const TOTAL_CIRCLES = 25;
 const CORRECT_AUDIO_COUNT = 23;
+const WRONG_AUDIO_FILES = ['/wrong/wrong1.mp3', '/wrong/wromg2.mp3'];
 const LEADERBOARD_CACHE_KEY = 'colorRushLeaderboardCache';
 const LEADERBOARD_CACHE_AT_KEY = 'colorRushLeaderboardCacheAt';
 
@@ -342,7 +343,9 @@ export default function ColorRush() {
   const timerRef = useRef(null);
   const countdownRef = useRef(null);
   const correctAudioRef = useRef(null);
+  const wrongAudioRef = useRef(null);
   const lastCorrectAudioRef = useRef(null);
+  const lastWrongAudioRef = useRef(null);
 
   useEffect(() => { gameRef.current = game; }, [game]);
 
@@ -373,6 +376,7 @@ export default function ColorRush() {
       clearInterval(timerRef.current);
       clearTimeout(countdownRef.current);
       correctAudioRef.current?.pause();
+      wrongAudioRef.current?.pause();
     };
   }, [loadLeaderboard]);
 
@@ -473,6 +477,23 @@ export default function ColorRush() {
     void audio.play().catch(() => {});
   };
 
+  const playWrongAudio = () => {
+    let clip = Math.floor(Math.random() * WRONG_AUDIO_FILES.length);
+    if (WRONG_AUDIO_FILES.length > 1) {
+      while (clip === lastWrongAudioRef.current) clip = Math.floor(Math.random() * WRONG_AUDIO_FILES.length);
+    }
+    lastWrongAudioRef.current = clip;
+
+    wrongAudioRef.current?.pause();
+    const audio = new Audio(WRONG_AUDIO_FILES[clip]);
+    audio.volume = 0.65;
+    wrongAudioRef.current = audio;
+    audio.addEventListener('ended', () => {
+      if (wrongAudioRef.current === audio) wrongAudioRef.current = null;
+    }, { once: true });
+    void audio.play().catch(() => {});
+  };
+
   const handleOrb = (color, node) => {
     const current = gameRef.current;
     if (!current.running || current.paused || !current.target) return;
@@ -482,7 +503,10 @@ export default function ColorRush() {
     const nextStreak = correct ? current.streak + 1 : 0;
     setGame((value) => ({ ...value, score: nextScore, streak: nextStreak, hits: value.hits + (correct ? 1 : 0), attempts: value.attempts + 1, delta: correct ? POINTS_CORRECT : -POINTS_WRONG, feedback: correct ? (nextStreak >= 3 ? `Streak x${nextStreak} — keep going!` : 'Nice hit. Find the next one.') : 'Missed. Reset your focus.' }));
     if (correct) playCorrectAudio();
-    else playWrongFeedback();
+    else {
+      playWrongAudio();
+      playWrongFeedback();
+    }
     window.setTimeout(() => { if (gameRef.current.running) nextBoard(); }, 90);
   };
 
@@ -560,7 +584,7 @@ export default function ColorRush() {
         {screen === 'leaderboard' ? <LeaderboardScreen profiles={profiles} loading={leaderboardLoading} synced={leaderboardSynced} error={leaderboardError} selectedProfile={selectedProfile} onSelect={setSelectedProfile} onCloseProfile={() => setSelectedProfile(null)} onPlayAgain={playAgain} onBack={() => { setSelectedProfile(null); setScreen(leaderboardReturn); }} /> : null}
       </div>
       <Footer />
-      {guideOpen ? <GuideModal onClose={() => { setGuideOpen(false); setScreen('setup'); }} onStart={() => { window.localStorage.setItem('colorRushGuideSeen', '1'); setGuideOpen(false); openGameLobby(); }} /> : null}
+      {guideOpen ? <GuideModal onClose={() => { setGuideOpen(false); setScreen('setup'); }} onStart={() => { window.localStorage.setItem('colorRushGuideSeen', '1'); setGuideOpen(false); startCountdown(); }} /> : null}
       {countdown ? <CountdownOverlay value={countdown} /> : null}
     </main>
   );
