@@ -13,3 +13,13 @@ The live arena smoke test also confirmed the timer counts down, the target label
 After the sample round completed, the result screen displayed final score, hits, accuracy, best score, and a single compact leaderboard row for the top player. The local fallback board populated correctly even without Neon configuration, and the dedicated `View all` action remained available.
 
 The populated full leaderboard rendered the top player as a clean ranked row, and clicking that row opened the player profile with top score, total games, average accuracy, and run history. This confirms the separate leaderboard screen is not just a visual placeholder.
+
+Refinement smoke test: the landing card is visibly wider and shorter, the copy is reduced, body scrolling is removed in favor of the contained app stage, and the rules view keeps a compact one-player leaderboard area.
+
+Second refinement smoke test: submitting a player name now opens a `ROUND READY` lobby with a clear `START ROUND` CTA and no active board. Only pressing that CTA triggers the countdown; the game board is not playable before the action.
+
+Component refactor verification: the entry, rules, setup, round-ready lobby, countdown, and active game arena all render after extraction. The desktop arena now shows the player name, target color, timer, score, streak, and a compact 4×4 board together at laptop viewport size. The page orchestrator is 246 lines, while reusable screens, modals, shared UI, and client utilities live in separate files under `components/color-rush/` and `lib/color-rush/`.
+
+Landscape arena verification: at a 2340×1080 browser window, the active screen uses the new split layout. The target panel measures 264×586 on the left, the play area measures 733×586 on the right, and the 4×4 board is fully visible at 430×430. The target color, player name, round, HUD, feedback, and end-round action remain visible.
+
+Portrait verification: at a mobile-sized viewport, the split breakpoint stays disabled. The target panel becomes a compact horizontal strip above the HUD and the play area remains below it, preserving the mobile vertical flow.

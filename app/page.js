@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { BrandBar, Footer } from '../components/color-rush/SharedUI';
+import { initialGame, POINTS_CORRECT, POINTS_WRONG } from '../lib/color-rush/config';
 import {
   ArrowLeft,
   ArrowRight,
@@ -33,28 +35,9 @@ const COLORS = [
 
 const GAME_DURATION = 60;
 const TOTAL_CIRCLES = 25;
-const POINTS_CORRECT = 5;
-const POINTS_WRONG = 3;
 const CORRECT_AUDIO_COUNT = 23;
 const LEADERBOARD_CACHE_KEY = 'colorRushLeaderboardCache';
 const LEADERBOARD_CACHE_AT_KEY = 'colorRushLeaderboardCacheAt';
-
-const initialGame = {
-  score: 0,
-  timeLeft: GAME_DURATION,
-  streak: 0,
-  hits: 0,
-  attempts: 0,
-  round: 0,
-  target: null,
-  promptColor: null,
-  board: [],
-  running: false,
-  paused: false,
-  submitted: false,
-  feedback: 'Find the target.',
-  delta: null,
-};
 
 function makeBoard() {
   const target = COLORS[Math.floor(Math.random() * COLORS.length)];
@@ -195,29 +178,6 @@ function Eyebrow({ children, number }) {
       {children}
       {number ? <span className="eyebrow-number">{number}</span> : null}
     </div>
-  );
-}
-
-function BrandBar() {
-  return (
-    <header className="brand-bar">
-      <div className="brand-lockup">
-        <span className="brand-orb"><span /></span>
-        <span>COLOR <strong>RUSH</strong></span>
-      </div>
-      <div className="brand-meta"><span className="live-dot" /> REFLEX ARENA <span className="version-chip">v2.0</span></div>
-    </header>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="site-footer">
-      <span>COLOR RUSH / 2026</span>
-      <a href="https://instagram.com/rao.mynkk" target="_blank" rel="noreferrer">
-        <Instagram size={13} strokeWidth={1.8} /> rao.mynkk <ExternalLink size={11} />
-      </a>
-    </footer>
   );
 }
 
@@ -467,13 +427,21 @@ export default function ColorRush() {
   };
 
   const beginChallenge = () => {
-    if (normalizeName(playerName).length < 2 || normalizeName(playerName).length > 15) {
+    const cleanName = normalizeName(playerName);
+    if (cleanName.length < 2 || cleanName.length > 15) {
       setNameError(true);
       return;
     }
     setNameError(false);
     if (window.localStorage.getItem('colorRushGuideSeen') !== '1') setGuideOpen(true);
-    else startCountdown();
+    else openGameLobby();
+  };
+
+  const openGameLobby = () => {
+    clearTimeout(countdownRef.current);
+    setCountdown(null);
+    setGame(initialGame);
+    setScreen('game');
   };
 
   const startGame = () => {
@@ -560,11 +528,24 @@ export default function ColorRush() {
     loadLeaderboard(true);
   };
 
-  const startFromSetup = () => beginChallenge();
-  const playAgain = () => { setPlayerName((name) => name || ''); setScreen('setup'); window.setTimeout(() => document.getElementById('player-name')?.focus(), 50); };
+  const goToSetup = () => {
+    setScreen('setup');
+    window.setTimeout(() => document.getElementById('player-name')?.focus(), 50);
+  };
+
+  const playAgain = () => {
+    setPlayerName((name) => name || '');
+    goToSetup();
+  };
+
   const shareResult = async () => {
     const message = `I scored ${result?.score || 0} points in Color Rush! Can you beat me?`;
-    try { await navigator.clipboard.writeText(message); setShareFeedback('Result copied. Send it to your squad.'); } catch { setShareFeedback(message); }
+    try {
+      await navigator.clipboard.writeText(message);
+      setShareFeedback('Result copied. Send it to your squad.');
+    } catch {
+      setShareFeedback(message);
+    }
   };
 
   return (
@@ -572,14 +553,14 @@ export default function ColorRush() {
       <BrandBar />
       <div className="content-stage">
         {screen === 'fullscreen' ? <FullscreenScreen onEnter={enterFullscreen} onContinue={showRules} /> : null}
-        {screen === 'rules' ? <RulesScreen profiles={profiles} onEnterSetup={() => { setScreen('setup'); window.setTimeout(() => document.getElementById('player-name')?.focus(), 50); }} onViewLeaderboard={() => openLeaderboard('rules')} onSelectProfile={(profile) => { openLeaderboard('rules'); setSelectedProfile(profile); }} /> : null}
-        {screen === 'setup' ? <SetupScreen playerName={playerName} setPlayerName={setPlayerName} error={nameError} onBack={showRules} onStart={startFromSetup} /> : null}
-        {screen === 'game' ? <GameScreen game={game} onOrb={handleOrb} onPause={togglePause} onBack={leaveGame} onQuit={finishGame} /> : null}
-        {screen === 'result' && result ? <ResultScreen result={result} profiles={profiles} onViewLeaderboard={() => openLeaderboard('result')} onSelectProfile={(profile) => { openLeaderboard('result'); setSelectedProfile(profile); }} onPlayAgain={playAgain} onBack={() => setScreen('setup')} onShare={shareResult} shareFeedback={shareFeedback} /> : null}
+        {screen === 'rules' ? <RulesScreen profiles={profiles} onEnterSetup={goToSetup} onViewLeaderboard={() => openLeaderboard('rules')} onSelectProfile={(profile) => { openLeaderboard('rules'); setSelectedProfile(profile); }} /> : null}
+        {screen === 'setup' ? <SetupScreen playerName={playerName} setPlayerName={setPlayerName} error={nameError} onBack={showRules} onStart={beginChallenge} /> : null}
+        {screen === 'game' ? <GameScreen game={game} playerName={playerName} onOrb={handleOrb} onPause={togglePause} onBack={leaveGame} onQuit={finishGame} onStart={startCountdown} /> : null}
+        {screen === 'result' && result ? <ResultScreen result={result} profiles={profiles} onViewLeaderboard={() => openLeaderboard('result')} onSelectProfile={(profile) => { openLeaderboard('result'); setSelectedProfile(profile); }} onPlayAgain={playAgain} onBack={goToSetup} onShare={shareResult} shareFeedback={shareFeedback} /> : null}
         {screen === 'leaderboard' ? <LeaderboardScreen profiles={profiles} loading={leaderboardLoading} synced={leaderboardSynced} error={leaderboardError} selectedProfile={selectedProfile} onSelect={setSelectedProfile} onCloseProfile={() => setSelectedProfile(null)} onPlayAgain={playAgain} onBack={() => { setSelectedProfile(null); setScreen(leaderboardReturn); }} /> : null}
       </div>
       <Footer />
-      {guideOpen ? <GuideModal onClose={() => { setGuideOpen(false); setScreen('setup'); }} onStart={() => { window.localStorage.setItem('colorRushGuideSeen', '1'); setGuideOpen(false); startCountdown(); }} /> : null}
+      {guideOpen ? <GuideModal onClose={() => { setGuideOpen(false); setScreen('setup'); }} onStart={() => { window.localStorage.setItem('colorRushGuideSeen', '1'); setGuideOpen(false); openGameLobby(); }} /> : null}
       {countdown ? <CountdownOverlay value={countdown} /> : null}
     </main>
   );
