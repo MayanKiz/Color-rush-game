@@ -709,15 +709,3 @@ html, body { overscroll-behavior: none; }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(content-stage), ::view-transition-new(content-stage) { animation-duration: .01ms; animation-delay: 0ms; }
 }
-
-
-/* Cross-browser staged screen transition: slow, calm, and independent of View Transition API. */
-.content-stage { view-transition-name: none; }
-.screen-stage { position: relative; }
-.screen-stage-exiting > * { opacity: 0; transform: translateY(-5px) scale(1.008); filter: blur(3px); transition: opacity 180ms ease-in, transform 180ms ease-in, filter 180ms ease-in; pointer-events: none; }
-.screen-stage-entering > * { animation: screen-stage-enter 420ms cubic-bezier(.22, 1, .36, 1) both; }
-.screen-stage-idle > * { opacity: 1; transform: none; filter: none; }
-@keyframes screen-stage-enter { from { opacity: 0; transform: translateY(8px) scale(.992); filter: blur(3px); } 58% { opacity: .86; filter: blur(1.2px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
-@media (prefers-reduced-motion: reduce) {
-  .screen-stage-exiting > *, .screen-stage-entering > * { animation: none; transition: none; opacity: 1; transform: none; filter: none; }
-}
