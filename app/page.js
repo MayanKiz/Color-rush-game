@@ -45,6 +45,14 @@ export default function ColorRush() {
   const boardFrameRef = useRef(null);
   const tapLockRef = useRef(false);
 
+  const changeScreen = useCallback((nextScreen) => {
+    if (typeof document !== 'undefined' && typeof document.startViewTransition === 'function') {
+      document.startViewTransition(() => setScreen(nextScreen));
+      return;
+    }
+    setScreen(nextScreen);
+  }, []);
+
   useEffect(() => { gameRef.current = game; }, [game]);
 
   const loadLeaderboard = useCallback(async (force = false) => {
@@ -99,7 +107,7 @@ export default function ColorRush() {
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const showRules = () => setScreen('rules');
+  const showRules = () => changeScreen('rules');
 
   const enterFullscreen = async () => {
     try {
@@ -114,7 +122,7 @@ export default function ColorRush() {
     clearTimeout(countdownRef.current);
     const steps = ['3', '2', '1', 'GO'];
     let index = 0;
-    setScreen('game');
+    changeScreen('game');
     setCountdown(steps[index]);
     const tick = () => {
       index += 1;
@@ -143,14 +151,14 @@ export default function ColorRush() {
     clearTimeout(countdownRef.current);
     setCountdown(null);
     setGame(initialGame);
-    setScreen('game');
+    changeScreen('game');
   };
 
   const startGame = () => {
     const { target, board } = makeBoard();
     setGame({ ...initialGame, target, board, round: 1, running: true });
     setShareFeedback('');
-    setScreen('game');
+    changeScreen('game');
   };
 
   const nextBoard = () => {
@@ -192,7 +200,7 @@ export default function ColorRush() {
     const nextResult = { score: current.score, hits: current.hits, accuracy, bestScore, isNewBest: current.score > previousBest };
     setGame((value) => ({ ...value, running: false, paused: false, submitted: true }));
     setResult(nextResult);
-    setScreen('result');
+    changeScreen('result');
     try {
       const localScores = JSON.parse(window.localStorage.getItem('colorRushScores') || '[]');
       localScores.push(payload);
@@ -213,18 +221,18 @@ export default function ColorRush() {
     tapLockRef.current = false;
     setCountdown(null);
     setGame((current) => ({ ...current, running: false, paused: false }));
-    setScreen('setup');
+    changeScreen('setup');
   };
 
   const openLeaderboard = (from) => {
     setLeaderboardReturn(from);
     setSelectedProfile(null);
-    setScreen('leaderboard');
+    changeScreen('leaderboard');
     loadLeaderboard(true);
   };
 
   const goToSetup = () => {
-    setScreen('setup');
+    changeScreen('setup');
     window.setTimeout(() => document.getElementById('player-name')?.focus(), 50);
   };
 
@@ -252,10 +260,10 @@ export default function ColorRush() {
         {screen === 'setup' ? <SetupScreen playerName={playerName} setPlayerName={setPlayerName} error={nameError} onBack={showRules} onStart={beginChallenge} /> : null}
         {screen === 'game' ? <GameScreen game={game} playerName={playerName} onOrb={handleOrb} onPause={togglePause} onBack={leaveGame} onQuit={finishGame} onStart={startCountdown} /> : null}
         {screen === 'result' && result ? <ResultScreen result={result} profiles={profiles} onViewLeaderboard={() => openLeaderboard('result')} onSelectProfile={(profile) => { openLeaderboard('result'); setSelectedProfile(profile); }} onPlayAgain={playAgain} onBack={goToSetup} onShare={shareResult} shareFeedback={shareFeedback} /> : null}
-        {screen === 'leaderboard' ? <LeaderboardScreen profiles={profiles} loading={leaderboardLoading} synced={leaderboardSynced} error={leaderboardError} selectedProfile={selectedProfile} onSelect={setSelectedProfile} onCloseProfile={() => setSelectedProfile(null)} onPlayAgain={playAgain} onBack={() => { setSelectedProfile(null); setScreen(leaderboardReturn); }} /> : null}
+        {screen === 'leaderboard' ? <LeaderboardScreen profiles={profiles} loading={leaderboardLoading} synced={leaderboardSynced} error={leaderboardError} selectedProfile={selectedProfile} onSelect={setSelectedProfile} onCloseProfile={() => setSelectedProfile(null)} onPlayAgain={playAgain} onBack={() => { setSelectedProfile(null); changeScreen(leaderboardReturn); }} /> : null}
       </div>
       <Footer />
-      {guideOpen ? <GuideModal onClose={() => { setGuideOpen(false); setScreen('setup'); }} onStart={() => { window.localStorage.setItem('colorRushGuideSeen', '1'); setGuideOpen(false); openGameLobby(); }} /> : null}
+      {guideOpen ? <GuideModal onClose={() => { setGuideOpen(false); changeScreen('setup'); }} onStart={() => { window.localStorage.setItem('colorRushGuideSeen', '1'); setGuideOpen(false); openGameLobby(); }} /> : null}
       {countdown ? <CountdownOverlay value={countdown} /> : null}
     </main>
   );
