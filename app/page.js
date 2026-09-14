@@ -42,6 +42,7 @@ export default function ColorRush() {
   const timerRef = useRef(null);
   const countdownRef = useRef(null);
   const boardTimerRef = useRef(null);
+  const boardFrameRef = useRef(null);
   const tapLockRef = useRef(false);
 
   useEffect(() => { gameRef.current = game; }, [game]);
@@ -73,6 +74,7 @@ export default function ColorRush() {
       clearInterval(timerRef.current);
       clearTimeout(countdownRef.current);
       clearTimeout(boardTimerRef.current);
+      cancelAnimationFrame(boardFrameRef.current);
     };
   }, [loadLeaderboard]);
 
@@ -167,10 +169,11 @@ export default function ColorRush() {
     setGame((value) => ({ ...value, score: nextScore, streak: nextStreak, hits: value.hits + (correct ? 1 : 0), attempts: value.attempts + 1, delta: correct ? POINTS_CORRECT : -POINTS_WRONG, feedback: correct ? (nextStreak >= 3 ? `Streak x${nextStreak} — keep going!` : 'Nice hit. Find the next one.') : 'Missed. Reset your focus.' }));
     playTone(correct);
     clearTimeout(boardTimerRef.current);
-    boardTimerRef.current = window.setTimeout(() => {
+    cancelAnimationFrame(boardFrameRef.current);
+    boardFrameRef.current = window.requestAnimationFrame(() => {
       if (gameRef.current.running) nextBoard();
       tapLockRef.current = false;
-    }, 90);
+    });
   };
 
   const togglePause = (force) => setGame((current) => ({ ...current, paused: typeof force === 'boolean' ? force : !current.paused }));
@@ -179,6 +182,8 @@ export default function ColorRush() {
     const current = gameRef.current;
     if (current.submitted) return;
     clearInterval(timerRef.current);
+    cancelAnimationFrame(boardFrameRef.current);
+    tapLockRef.current = false;
     const accuracy = current.attempts ? Math.round((current.hits / current.attempts) * 100) : 0;
     const previousBest = Number(window.localStorage.getItem('colorRushBest') || 0);
     const bestScore = Math.max(previousBest, current.score);
@@ -203,6 +208,7 @@ export default function ColorRush() {
   const leaveGame = () => {
     clearTimeout(countdownRef.current);
     clearTimeout(boardTimerRef.current);
+    cancelAnimationFrame(boardFrameRef.current);
     clearInterval(timerRef.current);
     tapLockRef.current = false;
     setCountdown(null);

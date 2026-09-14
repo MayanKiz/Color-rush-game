@@ -5,7 +5,7 @@ import { ArrowLeft, Clock3, Flame, Pause, Play } from 'lucide-react';
 import { Button, Eyebrow } from '../SharedUI';
 import { GAME_DURATION } from '../../../lib/color-rush/config';
 
-const OrbButton = memo(function OrbButton({ color, index, round, onOrb }) {
+const OrbButton = memo(function OrbButton({ color, index, onOrb }) {
   return (
     <button
       className="color-orb"
@@ -56,7 +56,7 @@ export default function GameScreen({ game, playerName, onOrb, onPause, onBack, o
         <div className="game-play-area">
           <div className="hud-grid"><div className="hud-card timer-card"><div className="hud-card-top"><span className="hud-label"><Clock3 size={12} /> TIME LEFT</span><strong>{game.timeLeft.toFixed(1)}</strong></div><div className="progress-track"><span className={game.timeLeft <= 8 ? 'urgent' : ''} style={{ width: `${progress}%` }} /></div></div><div className="hud-card"><span className="hud-label">SCORE</span><strong>{game.score}</strong>{game.delta ? <span className={`score-delta ${game.delta > 0 ? 'positive' : 'negative'}`}>{game.delta > 0 ? '+' : '−'}{Math.abs(game.delta)}</span> : null}</div><div className="hud-card"><span className="hud-label">STREAK</span><strong>{game.streak}</strong><span className="hud-subline"><Flame size={12} /> {game.streak >= 3 ? 'on fire' : 'build it'}</span></div></div>
 
-          <div className="arena-wrap"><div className="arena-caption"><span>SELECT THE MATCHING ORB</span><span>ROUND {String(game.round).padStart(2, '0')}</span></div><div className="grid-board" aria-label="Color matching game board">{game.board.map((color, index) => <OrbButton key={`${game.round}-${index}`} color={color} index={index} round={game.round} onOrb={onOrb} />)}</div>{game.paused ? <div className="pause-overlay"><span className="pause-icon"><Pause size={17} /></span><strong>Take a breath.</strong><span>Your board is waiting.</span><Button onClick={() => onPause(false)}>Resume <Play size={15} /></Button></div> : null}</div>
+          <div className="arena-wrap"><div className="arena-caption"><span>SELECT THE MATCHING ORB</span><span>ROUND {String(game.round).padStart(2, '0')}</span></div><div className="grid-board" aria-label="Color matching game board">{game.board.map((color, index) => <OrbButton key={`${game.round}-${index}`} color={color} index={index} onOrb={onOrb} />)}</div>{game.paused ? <div className="pause-overlay"><span className="pause-icon"><Pause size={17} /></span><strong>Take a breath.</strong><span>Your board is waiting.</span><Button onClick={() => onPause(false)}>Resume <Play size={15} /></Button></div> : null}</div>
 
           <div className="game-footer"><span aria-live="polite">{game.feedback}</span><button className="quiet-button danger" type="button" onClick={onQuit}>End round</button></div>
         </div>
