@@ -38,19 +38,25 @@ export default function ColorRush() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [countdown, setCountdown] = useState(null);
   const [shareFeedback, setShareFeedback] = useState('');
+  const [screenTransition, setScreenTransition] = useState('entering');
   const gameRef = useRef(game);
   const timerRef = useRef(null);
   const countdownRef = useRef(null);
   const boardTimerRef = useRef(null);
   const boardFrameRef = useRef(null);
   const tapLockRef = useRef(false);
+  const screenTimerRef = useRef(null);
+  const screenSettleRef = useRef(null);
 
   const changeScreen = useCallback((nextScreen) => {
-    if (typeof document !== 'undefined' && typeof document.startViewTransition === 'function') {
-      document.startViewTransition(() => setScreen(nextScreen));
-      return;
-    }
-    setScreen(nextScreen);
+    clearTimeout(screenTimerRef.current);
+    clearTimeout(screenSettleRef.current);
+    setScreenTransition('exiting');
+    screenTimerRef.current = window.setTimeout(() => {
+      setScreen(nextScreen);
+      setScreenTransition('entering');
+      screenSettleRef.current = window.setTimeout(() => setScreenTransition('idle'), 420);
+    }, 180);
   }, []);
 
   useEffect(() => { gameRef.current = game; }, [game]);
@@ -83,6 +89,8 @@ export default function ColorRush() {
       clearTimeout(countdownRef.current);
       clearTimeout(boardTimerRef.current);
       cancelAnimationFrame(boardFrameRef.current);
+      clearTimeout(screenTimerRef.current);
+      clearTimeout(screenSettleRef.current);
     };
   }, [loadLeaderboard]);
 
@@ -254,7 +262,7 @@ export default function ColorRush() {
   return (
     <main className="app-shell">
       <BrandBar />
-      <div className="content-stage">
+      <div className={`content-stage screen-stage screen-stage-${screenTransition}`}>
         {screen === 'fullscreen' ? <FullscreenScreen onEnter={enterFullscreen} onContinue={showRules} /> : null}
         {screen === 'rules' ? <RulesScreen profiles={profiles} onEnterSetup={goToSetup} onViewLeaderboard={() => openLeaderboard('rules')} onSelectProfile={(profile) => { openLeaderboard('rules'); setSelectedProfile(profile); }} /> : null}
         {screen === 'setup' ? <SetupScreen playerName={playerName} setPlayerName={setPlayerName} error={nameError} onBack={showRules} onStart={beginChallenge} /> : null}
