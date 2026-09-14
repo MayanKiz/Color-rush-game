@@ -698,3 +698,15 @@ html, body { overscroll-behavior: none; }
 .loading-sheen { position: absolute; inset: 0 auto 0 -35%; width: 35%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent); transform: skewX(-18deg); animation: loading-sheen 1.35s ease-in-out infinite; pointer-events: none; }
 @keyframes loading-sheen { to { left: 115%; } }
 @media (max-width: 520px) { .leaderboard-tabs { min-width: 204px; } .leaderboard-tabs button { min-width: 94px; } }
+
+
+/* Restored compact glass baseline: clearer background and a smaller mobile hero box. */
+.screen-card { backdrop-filter: blur(2px) saturate(132%); }
+.target-panel, .hud-card, .arena-wrap { backdrop-filter: blur(2px) saturate(132%); }
+.liquid-loading, .leaderboard-tabs { backdrop-filter: blur(2px) saturate(140%); }
+@media (max-width: 520px) {
+  .fullscreen-screen { width: calc(100% - 12px); max-height: calc(100dvh - 138px); padding: 24px 18px 20px; border-radius: 25px; }
+  .fullscreen-screen h1 { margin-top: 18px; font-size: clamp(34px, 10vw, 52px); }
+  .fullscreen-screen .hero-mark { margin-top: 20px; transform: scale(.86); transform-origin: left center; }
+  .fullscreen-screen .button { margin-top: 22px; min-height: 48px; }
+}
