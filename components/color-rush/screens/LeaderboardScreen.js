@@ -1,11 +1,32 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, ChevronRight, Crown, Sparkles } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { ArrowLeft, ArrowRight, ChevronRight, Crown, Sparkles, Sun } from 'lucide-react';
 import ProfileDetail from '../modals/ProfileDetail';
 import { Button, Eyebrow, StatusPill } from '../SharedUI';
 
+const dayKey = (value) => {
+  const date = new Date(value || 0);
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+};
+
 export default function LeaderboardScreen({ profiles, loading, synced, error, selectedProfile, onSelect, onCloseProfile, onPlayAgain, onBack }) {
-  const rows = profiles.slice(0, 50).map((profile, index) => {
+  const [view, setView] = useState('today');
+  const todayKey = dayKey(Date.now());
+  const todayProfiles = useMemo(() => profiles.map((profile) => {
+    const history = (profile.history || []).filter((entry) => dayKey(entry.playedAt) === todayKey);
+    if (!history.length) return null;
+    const topScore = Math.max(...history.map((entry) => Number(entry.score) || 0));
+    return {
+      ...profile,
+      topScore,
+      totalGames: history.length,
+      averageAccuracy: Math.round(history.reduce((sum, entry) => sum + (Number(entry.accuracy) || 0), 0) / history.length),
+      history,
+    };
+  }).filter(Boolean).sort((a, b) => b.topScore - a.topScore), [profiles, todayKey]);
+  const visibleProfiles = view === 'today' ? todayProfiles : profiles;
+  const rows = visibleProfiles.slice(0, 50).map((profile, index) => {
     const runs = Number(profile.totalGames || profile.history?.length || 1);
     return (
       <li key={`${profile.playerName}-${index}`}>
@@ -20,11 +41,12 @@ export default function LeaderboardScreen({ profiles, loading, synced, error, se
 
   return (
     <section className="screen-card leaderboard-screen">
-      <div className="leaderboard-header"><div><Eyebrow number="05">GLOBAL RANKINGS</Eyebrow><h2>Top <em>players.</em></h2><p className="section-copy">One clean board. Tap a player for details.</p></div><StatusPill synced={synced} /></div>
+      <div className="leaderboard-header"><div><Eyebrow number="05">SCOREBOARD</Eyebrow><h2>{view === 'today' ? 'Today’s ' : 'Top '}<em>players.</em></h2><p className="section-copy">{view === 'today' ? 'Fresh runs from today. Tap a player for details.' : 'All-time best runs. Tap a player for details.'}</p></div><StatusPill synced={synced} /></div>
+      <div className="leaderboard-tabs" role="tablist" aria-label="Scoreboard range"><button type="button" className={view === 'today' ? 'is-active' : ''} onClick={() => setView('today')} role="tab" aria-selected={view === 'today'}><Sun size={13} /> Today</button><button type="button" className={view === 'all' ? 'is-active' : ''} onClick={() => setView('all')} role="tab" aria-selected={view === 'all'}>All time</button></div>
       {loading ? <div className="loading-state"><span className="loading-orb" /> syncing the arena…</div> : null}
       {error ? <div className="offline-note">Showing the local board while the arena reconnects.</div> : null}
       <ol className="leaderboard-list">
-        {!loading && profiles.length === 0 ? <li className="empty-leaderboard"><Sparkles size={17} /> No runs yet. Be the first name here.</li> : rows}
+        {!loading && visibleProfiles.length === 0 ? <li className="empty-leaderboard"><Sparkles size={17} /> {view === 'today' ? 'No runs today yet. Be the first name here.' : 'No runs yet. Be the first name here.'}</li> : rows}
       </ol>
       <ProfileDetail profile={selectedProfile} onClose={onCloseProfile} />
       <div className="leaderboard-actions"><Button variant="secondary" onClick={onPlayAgain}>Play another round <ArrowRight size={16} /></Button><button className="quiet-button" type="button" onClick={onBack}><ArrowLeft size={14} /> Back</button></div>

@@ -675,3 +675,10 @@ html, body { overscroll-behavior: none; }
   .screen-card, .target-panel, .hud-card, .arena-wrap { backdrop-filter: blur(4px) saturate(138%); }
   .screen-card::after, .target-panel::after, .hud-card::after, .arena-wrap::after { opacity: .7; }
 }
+
+
+.leaderboard-tabs { display: inline-flex; align-items: center; gap: 4px; margin-top: 20px; padding: 4px; border: 1px solid rgba(153, 235, 255, .2); border-radius: 999px; background: rgba(2, 28, 42, .28); }
+.leaderboard-tabs button { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 12px; border-radius: 999px; color: #86aab8; background: transparent; font: 700 10px 'Space Grotesk'; letter-spacing: .06em; transition: color 140ms ease-out, background 140ms ease-out, transform 140ms ease-out; }
+.leaderboard-tabs button:hover { color: #e9fbff; transform: translateY(-1px); }
+.leaderboard-tabs button.is-active { color: #062432; background: linear-gradient(105deg, #74e8ff, #a9a1ff); box-shadow: 0 4px 14px rgba(72, 207, 241, .2), inset 0 1px rgba(255,255,255,.7); }
+@media (max-width: 520px) { .leaderboard-tabs { margin-top: 16px; } }
