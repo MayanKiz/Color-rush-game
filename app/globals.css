@@ -435,7 +435,7 @@ body {
     radial-gradient(circle at 18% 10%, rgba(0, 182, 218, .28), transparent 28%),
     radial-gradient(circle at 86% 24%, rgba(21, 111, 180, .22), transparent 30%),
     linear-gradient(145deg, rgba(2, 19, 30, .22), rgba(0, 8, 15, .85)),
-    url('/color-rush-bg.png');
+    url('/bg.png');
   background-position: center;
   background-size: cover;
 }
