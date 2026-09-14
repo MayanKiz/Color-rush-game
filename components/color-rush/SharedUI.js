@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink, Instagram } from 'lucide-react';
+import { Instagram } from 'lucide-react';
 
 export function Button({ children, variant = 'primary', className = '', ...props }) {
   return (
@@ -36,8 +36,8 @@ export function Footer() {
   return (
     <footer className="site-footer">
       <span>COLOR RUSH / 2026</span>
-      <a href="https://instagram.com/rao.mynkk" target="_blank" rel="noreferrer">
-        <Instagram size={13} strokeWidth={1.8} /> rao.mynkk <ExternalLink size={11} />
+      <a href="https://instagram.com/rao.mynkk" target="_blank" rel="noreferrer" aria-label="Open Instagram">
+        <Instagram size={17} strokeWidth={1.8} />
       </a>
     </footer>
   );

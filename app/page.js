@@ -229,8 +229,8 @@ export default function ColorRush() {
   };
 
   const playAgain = () => {
-    setPlayerName((name) => name || '');
-    goToSetup();
+    setShareFeedback('');
+    startCountdown();
   };
 
   const shareResult = async () => {
@@ -245,7 +245,7 @@ export default function ColorRush() {
 
   return (
     <main className="app-shell">
-      <BrandBar />
+      {screen === 'fullscreen' ? <BrandBar /> : null}
       <div className="content-stage">
         {screen === 'fullscreen' ? <FullscreenScreen onEnter={enterFullscreen} onContinue={showRules} /> : null}
         {screen === 'rules' ? <RulesScreen profiles={profiles} onEnterSetup={goToSetup} onViewLeaderboard={() => openLeaderboard('rules')} onSelectProfile={(profile) => { openLeaderboard('rules'); setSelectedProfile(profile); }} /> : null}
