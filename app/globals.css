@@ -733,3 +733,16 @@ html, body { overscroll-behavior: none; }
   .target-panel, .hud-card { backdrop-filter: blur(5px) saturate(140%); }
   .arena-wrap { backdrop-filter: blur(2px) saturate(125%); }
 }
+
+
+/* Game-only glass depth: blur the panels, never the actual background image. */
+body, body::before, body::after { filter: none !important; }
+.game-screen { backdrop-filter: blur(10px) saturate(150%); }
+.game-screen .target-panel, .game-screen .hud-card { backdrop-filter: blur(9px) saturate(148%); }
+.game-screen .arena-wrap { backdrop-filter: blur(3px) saturate(130%); }
+.game-screen .arena-wrap::after { opacity: .1; }
+@media (hover: none), (pointer: coarse) {
+  .game-screen { backdrop-filter: blur(8px) saturate(145%); }
+  .game-screen .target-panel, .game-screen .hud-card { backdrop-filter: blur(8px) saturate(145%); }
+  .game-screen .arena-wrap { backdrop-filter: blur(2px) saturate(125%); }
+}
