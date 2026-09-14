@@ -41,6 +41,8 @@ export default function ColorRush() {
   const gameRef = useRef(game);
   const timerRef = useRef(null);
   const countdownRef = useRef(null);
+  const boardTimerRef = useRef(null);
+  const tapLockRef = useRef(false);
 
   useEffect(() => { gameRef.current = game; }, [game]);
 
@@ -70,6 +72,7 @@ export default function ColorRush() {
     return () => {
       clearInterval(timerRef.current);
       clearTimeout(countdownRef.current);
+      clearTimeout(boardTimerRef.current);
     };
   }, [loadLeaderboard]);
 
@@ -155,14 +158,19 @@ export default function ColorRush() {
 
   const handleOrb = (color, node) => {
     const current = gameRef.current;
-    if (!current.running || current.paused || !current.target) return;
+    if (!current.running || current.paused || !current.target || tapLockRef.current) return;
+    tapLockRef.current = true;
     const correct = color.name === current.target.name;
     if (node) node.classList.add(correct ? 'hit' : 'miss');
     const nextScore = Math.max(-999, current.score + (correct ? POINTS_CORRECT : -POINTS_WRONG));
     const nextStreak = correct ? current.streak + 1 : 0;
     setGame((value) => ({ ...value, score: nextScore, streak: nextStreak, hits: value.hits + (correct ? 1 : 0), attempts: value.attempts + 1, delta: correct ? POINTS_CORRECT : -POINTS_WRONG, feedback: correct ? (nextStreak >= 3 ? `Streak x${nextStreak} — keep going!` : 'Nice hit. Find the next one.') : 'Missed. Reset your focus.' }));
     playTone(correct);
-    window.setTimeout(() => { if (gameRef.current.running) nextBoard(); }, 90);
+    clearTimeout(boardTimerRef.current);
+    boardTimerRef.current = window.setTimeout(() => {
+      if (gameRef.current.running) nextBoard();
+      tapLockRef.current = false;
+    }, 90);
   };
 
   const togglePause = (force) => setGame((current) => ({ ...current, paused: typeof force === 'boolean' ? force : !current.paused }));
@@ -194,7 +202,9 @@ export default function ColorRush() {
 
   const leaveGame = () => {
     clearTimeout(countdownRef.current);
+    clearTimeout(boardTimerRef.current);
     clearInterval(timerRef.current);
+    tapLockRef.current = false;
     setCountdown(null);
     setGame((current) => ({ ...current, running: false, paused: false }));
     setScreen('setup');

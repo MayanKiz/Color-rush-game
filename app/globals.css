@@ -628,3 +628,15 @@ html, body { overscroll-behavior: none; }
   .arena-caption { padding-bottom: 7px; }
   .grid-board { width: min(100%, 43vh); gap: 6px; }
 }
+
+
+/* Interaction performance: preserve gloss without forcing full-screen repaints on every tap. */
+.color-orb, .target-panel-orb, .button, .icon-button { will-change: transform; }
+.color-orb { contain: layout paint style; }
+.grid-board { contain: layout paint; }
+@media (hover: none), (pointer: coarse) {
+  .color-orb:hover { transform: none; filter: none; }
+  .color-orb:active { transform: scale(.92); }
+  .screen-card, .target-panel, .hud-card, .arena-wrap { backdrop-filter: blur(10px) saturate(132%); }
+  .screen-card::after, .target-panel::after, .hud-card::after, .arena-wrap::after { opacity: .55; }
+}
