@@ -7,7 +7,7 @@ export default function LeaderboardPreview({ profiles, onViewAll, onSelect }) {
   return (
     <section className="leaderboard-preview" aria-label="Leaderboard preview">
       <div className="preview-heading">
-        <div><span className="section-kicker"><Trophy size={13} /> LEADERBOARD</span><span className="preview-note">top player right now</span></div>
+        <div><span className="section-kicker"><Trophy size={13} /> LEADERBOARD</span><span className="preview-note">current all-time topper</span></div>
         <button className="text-link" type="button" onClick={onViewAll}>View all <ArrowRight size={14} /></button>
       </div>
       {top ? (

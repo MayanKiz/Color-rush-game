@@ -682,3 +682,19 @@ html, body { overscroll-behavior: none; }
 .leaderboard-tabs button:hover { color: #e9fbff; transform: translateY(-1px); }
 .leaderboard-tabs button.is-active { color: #062432; background: linear-gradient(105deg, #74e8ff, #a9a1ff); box-shadow: 0 4px 14px rgba(72, 207, 241, .2), inset 0 1px rgba(255,255,255,.7); }
 @media (max-width: 520px) { .leaderboard-tabs { margin-top: 16px; } }
+
+
+/* Liquid glass scoreboard switcher and richer translucent loading state. */
+.leaderboard-tabs { position: relative; isolation: isolate; overflow: hidden; min-width: 218px; justify-content: space-between; border-color: rgba(183, 246, 255, .28); background: linear-gradient(135deg, rgba(180, 239, 255, .11), rgba(55, 130, 180, .08)); box-shadow: inset 0 1px rgba(255,255,255,.2), 0 10px 28px rgba(0, 0, 0, .12); backdrop-filter: blur(10px) saturate(160%); }
+.leaderboard-tabs::before { content: ''; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle at 18% 0%, rgba(255,255,255,.18), transparent 32%), linear-gradient(110deg, transparent 25%, rgba(129, 232, 255, .1) 50%, transparent 75%); pointer-events: none; }
+.leaderboard-tabs button { position: relative; z-index: 1; flex: 1; justify-content: center; min-width: 100px; transition: color 180ms ease-out, transform 180ms ease-out; }
+.leaderboard-tabs button.is-active { color: #062432; background: transparent; box-shadow: none; }
+.liquid-tab-thumb { position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border: 1px solid rgba(255,255,255,.42); border-radius: 999px; background: linear-gradient(135deg, rgba(150, 240, 255, .82), rgba(168, 160, 255, .7)); box-shadow: 0 5px 18px rgba(63, 210, 243, .3), inset 0 1px rgba(255,255,255,.8), inset 0 -1px rgba(82, 112, 196, .18); transition: transform 360ms cubic-bezier(.22, 1, .36, 1); pointer-events: none; }
+.liquid-tab-thumb::after { content: ''; position: absolute; top: 3px; left: 13%; width: 38%; height: 7px; border-radius: 999px; background: rgba(255,255,255,.48); filter: blur(3px); }
+.liquid-loading { position: relative; display: flex; overflow: hidden; justify-content: flex-start; min-height: 76px; margin-top: 15px; padding: 14px 16px; border: 1px solid rgba(161, 239, 255, .22); border-radius: 16px; background: linear-gradient(120deg, rgba(110, 224, 255, .11), rgba(147, 132, 255, .08)); box-shadow: inset 0 1px rgba(255,255,255,.2), 0 12px 30px rgba(0,0,0,.12); backdrop-filter: blur(8px) saturate(150%); }
+.liquid-loading strong, .liquid-loading small { display: block; text-align: left; }
+.liquid-loading strong { color: #dffaff; font: 600 12px 'Space Grotesk'; letter-spacing: .06em; }
+.liquid-loading small { margin-top: 4px; color: #8fb6c3; font-size: 10px; }
+.loading-sheen { position: absolute; inset: 0 auto 0 -35%; width: 35%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent); transform: skewX(-18deg); animation: loading-sheen 1.35s ease-in-out infinite; pointer-events: none; }
+@keyframes loading-sheen { to { left: 115%; } }
+@media (max-width: 520px) { .leaderboard-tabs { min-width: 204px; } .leaderboard-tabs button { min-width: 94px; } }
